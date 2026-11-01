@@ -50,6 +50,8 @@ for (const store of STORES) {
       for (let offset = 0; offset < 2000; offset += store.PAGE_SIZE) {
         if (offset > 0) await sleep(DELAY_MS);
         const res = await fetch(store.rangeUrl(offset), { headers: { 'User-Agent': UA, Accept: 'text/html' } });
+        // Lidl answers 404 for a page past the last one, which just means we're done.
+        if (res.status === 404 && total && offset >= total) { complete = true; break; }
         if (res.status !== 200) {
           console.error(`  Stopped ${store.label}: HTTP ${res.status} at offset ${offset}. Not retrying; run again later.`);
           break;
