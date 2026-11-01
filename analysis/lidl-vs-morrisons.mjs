@@ -48,9 +48,24 @@ const flag = (re, s) => re.test(s);
 const tierOf = (name) => (/\bthe best\b/i.test(name) ? 'premium' : /\bsavers\b/i.test(name) ? 'value' : 'standard');
 const lidlTier = (name) => (/\bDELUXE\b/.test(name) ? 'premium' : 'standard');
 
+// Pairs checked by eye on 1 Nov 2026 and found not to be the same product.
+const BAD_MATCH = [
+  /^Bananas Loose/i,                 // -> banana crisps
+  /Gnocchi/i,                        // -> cauliflower gnocchi
+  /DULANO Meatballs/i,               // -> tinned meatballs in gravy
+  /ERIDANOUS Greek Yogurt/i,         // Greek yogurt -> Greek-style yogurt
+  /ERIDANOUS Tuna/i,                 // Greek tuna -> tuna chunks in spring water
+  /^Olives 250/i,                    // whole olives -> sliced black olives
+  /^Dips 250/i,                      // unnamed dip -> salsa
+];
+const OWN = /^(Morrisons|Market Street|Savers)\b/i;
+
 const pairs = [], skipped = [];
 for (const l of lidl) {
   const term = plainTerm(l.name);
+  if (BAD_MATCH.some((re) => re.test(l.name))) { skipped.push({ name: l.name, why: 'checked: not the same product' }); continue; }
+  // A "regular price" far above the app price is usually a misread (e.g. a per-kg figure).
+  if (l.regular > l.plus * 1.6) { skipped.push({ name: l.name, why: 'Lidl regular price unclear' }); continue; }
   const lsize = packSize({ ...l, price: l.regular });
   const lu = perUnit({ ...l, price: l.regular, unitPrice: l.unitPrice && l.regular !== l.plus ? null : l.unitPrice });
   const qty = lsize?.loose ? { qty: 1, u: 'kg' } : lsize;
@@ -78,6 +93,7 @@ for (const l of lidl) {
     morrisons: { name: best.m.name, price: best.m.price, ratio: +best.ratio.toFixed(2), tier: tierOf(best.m.name), offer: best.m.offer || null },
     mSame: same(best),
     mStd: bestStd ? same(bestStd) : null, mStdName: bestStd?.m.name || null,
+    ownBrand: OWN.test(best.m.name) && !/^[A-Z]{3,}/.test(l.name.replace(/^(XXL|PARTY)\s/, '')) ? 'both' : OWN.test(best.m.name) ? 'morrisons-own' : 'morrisons-branded',
     sizeNear: !!near.length,
   });
 }
@@ -100,6 +116,7 @@ const out = {
   lidlProducts: lidl.length, paired: uniq.length, skipped: skipped.length,
   headline: report(near, 'Similar pack sizes, cheapest Morrisons equivalent (incl. Savers), Lidl regular prices'),
   standardOnly: report(std, 'Same, but Morrisons Savers excluded', (r) => r.lidl.regular, (r) => r.mStd),
+  ownBrandOnly: report(near.filter((r) => r.ownBrand !== 'morrisons-branded'), 'Only where the Morrisons match is Morrisons own-label'),
   withLidlPlus: report(near, 'Same as headline, Lidl Plus app prices', (r) => r.lidl.plus),
   allSizes: report(uniq, 'Including pairs where pack sizes differ a lot'),
   sections,
@@ -107,6 +124,6 @@ const out = {
   skippedReasons: Object.fromEntries(Object.entries(Object.groupBy(skipped, (s) => s.why)).map(([k, v]) => [k, v.length])),
 };
 writeFileSync('analysis/lidl-vs-morrisons.json', JSON.stringify(out, null, 1));
-for (const k of ['headline', 'standardOnly', 'withLidlPlus', 'allSizes']) console.log(JSON.stringify(out[k]));
+for (const k of ['headline', 'standardOnly', 'ownBrandOnly', 'withLidlPlus', 'allSizes']) console.log(JSON.stringify(out[k]));
 console.log('sections', JSON.stringify(sections));
 console.log('skipped', JSON.stringify(out.skippedReasons), 'of', lidl.length);
