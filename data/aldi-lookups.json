@@ -1,5 +1,5 @@
 {
- "fetchedAt": 1793572018825,
+ "fetchedAt": 1793572066156,
  "source": "aldi.co.uk product pages, looked up per list item",
  "products": [
   {
@@ -623,6 +623,42 @@
    "unitText": "£2.20/1 KG",
    "was": null,
    "url": "https://www.aldi.co.uk/product/worldwide-foods-ready-to-heat-sticky-jasmine-rice-000000000726161002",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "celery",
+   "category": "lookup",
+   "name": "NATURE'S PICK Celery Sticks",
+   "size": "350 g",
+   "price": 1.19,
+   "unitText": "£3.40/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/nature-s-pick-celery-sticks-000000000000339796",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "parmesan",
+   "category": "lookup",
+   "name": "Specially Selected Parmigiano Reggiano PDO",
+   "size": "170 g",
+   "price": 3.29,
+   "unitText": "£19.35/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/specially-selected-parmigiano-reggiano-pdo-000000000000504638",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "parmesan",
+   "category": "lookup",
+   "name": "EMPORIUM Italian Grana Padano",
+   "size": "200 g",
+   "price": 2.75,
+   "unitText": "£13.75/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/emporium-italian-grana-padano-000000000000284856",
    "image": "",
    "available": true
   }
