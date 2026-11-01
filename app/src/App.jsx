@@ -8,6 +8,8 @@ import { Toast } from '@base-ui/react/toast';
 import { DATA, morrisonsFor, lidlFor, gbp, perUnit, unitText, orderOptions, choosePack, sizeText, needAmount, probablyHave } from './data.js';
 import { useCapability, useDoc, ingredientsFor, sampleErrorText } from './claude.js';
 
+const isWeb = () => !!window.__FP_WEB__;
+
 const STORES = [
   { id: 'morrisons', label: 'Morrisons', place: 'Stamford Hill' },
   { id: 'lidl', label: 'Lidl', place: 'Amhurst Park' },
@@ -217,6 +219,7 @@ function Planner({ db, sample }) {
 function PlanPanel({ sample, plan, setPlan, items, isExample, pantrySet, pantry, setPantry, toast, onDone, db }) {
   const [meals, setMeals] = useState(plan.meals || '');
   const [busy, setBusy] = useState(false);
+  const [queued, setQueued] = useState(false);
   const [error, setError] = useState('');
   const [extra, setExtra] = useState('');
   const ctl = useRef(null);
@@ -225,15 +228,15 @@ function PlanPanel({ sample, plan, setPlan, items, isExample, pantrySet, pantry,
   async function make() {
     if (!sample || !meals.trim()) return;
     ctl.current = new AbortController();
-    setBusy(true); setError('');
+    setBusy(true); setError(''); setQueued(false);
     try {
-      const list = await ingredientsFor(sample, meals.trim(), ctl.current.signal);
+      const list = await ingredientsFor(sample, meals.trim(), ctl.current.signal, () => setQueued(true));
       setPlan({ meals: meals.trim(), items: list });
       toast.add({ title: `${list.length} ingredients`, description: 'Untick anything you already have.' });
     } catch (e) {
       setError(sampleErrorText(e));
     } finally {
-      setBusy(false);
+      setBusy(false); setQueued(false);
     }
   }
 
@@ -264,7 +267,7 @@ function PlanPanel({ sample, plan, setPlan, items, isExample, pantrySet, pantry,
       <div className="row-actions">
         {busy ? (
           <>
-            <button className="btn primary" disabled>Asking Claude…</button>
+            <button className="btn primary" disabled>{queued ? 'Waiting for your Mac…' : 'Asking Claude…'}</button>
             <button className="btn" onClick={() => ctl.current?.abort()}>Stop</button>
           </>
         ) : (
@@ -272,11 +275,12 @@ function PlanPanel({ sample, plan, setPlan, items, isExample, pantrySet, pantry,
         )}
         {items.length > 0 && !busy && <button className="btn" onClick={onDone}>Go to shop list</button>}
       </div>
+      {queued && <p className="note">Your Mac makes the list and usually answers within a few minutes. Keep this page open.</p>}
       {sample === null && (
-        <p className="note">Making a list from meals works when this page is open in Claude. You can still edit the list below.</p>
+        <p className="note">{isWeb() ? 'Open your personal link once on this device to make lists from meals.' : 'Making a list from meals works when this page is open in Claude. You can still edit the list below.'}</p>
       )}
       {error && <p className="error">{error}</p>}
-      {db === null && <p className="note">Your list is saved on this device only. Open the page in Claude to keep it in sync between phone and laptop.</p>}
+      {db === null && <p className="note">{isWeb() ? 'Your list is saved on this device only. Open your personal link to keep it in sync between phone and laptop.' : 'Your list is saved on this device only. Open the page in Claude to keep it in sync between phone and laptop.'}</p>}
 
       <h2 className="h2">
         <span>{isExample ? 'Example: veggie lasagna for 8' : 'Ingredients'}</span>

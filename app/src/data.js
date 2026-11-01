@@ -4,17 +4,25 @@ import { match as lidlMatch } from '../../lib/lidl.mjs';
 
 export const DATA = window.__FP_DATA__ || { morrisons: {}, lidl: [], receipts: [], updatedAt: Date.now(), example: [] };
 
+// The website loads its data after this module has run, so DATA is filled in place.
+export function setData(d) {
+  Object.assign(DATA, d);
+  everyMorrisons = null;
+}
+
 // Every Morrisons product we've seen, for items with no search of their own yet.
-const allMorrisons = (() => {
+let everyMorrisons = null;
+function allMorrisons() {
+  if (everyMorrisons) return everyMorrisons;
   const seen = new Map();
   for (const list of Object.values(DATA.morrisons || {})) for (const p of list) if (!seen.has(p.name)) seen.set(p.name, p);
-  return [...seen.values()];
-})();
+  return (everyMorrisons = [...seen.values()]);
+}
 
 export function morrisonsFor(term) {
   const own = DATA.morrisons?.[term.toLowerCase()];
   if (own?.length) return rank(term, own).filter((p) => p.match);
-  return rank(term, allMorrisons.filter((p) => relevant(term, p.name)));
+  return rank(term, allMorrisons().filter((p) => relevant(term, p.name)));
 }
 
 const stem = (w) => w.toLowerCase().replace(/[^a-z]/g, '');

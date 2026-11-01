@@ -62,6 +62,10 @@ const data = {
   example,
 };
 
+// The website loads prices from app/public/data.json; receipt prices stay
+// private in Supabase and are fetched with the household key.
+await writeFile('app/public/data.json', JSON.stringify({ ...data, receipts: [] }));
+
 const html = (await readFile('app/dist/index.html', 'utf8')).replace(
   '/*__DATA__*/null',
   JSON.stringify(data).replace(/</g, '\\u003c').replace(/[\u2028\u2029]/g, ''),
@@ -75,11 +79,13 @@ const fragment = html
   .replace(/<\/?head>\s*/gi, '')
   .replace(/<meta charset[^>]*>\s*/i, '')
   .replace(/<meta name="viewport"[^>]*>\s*/i, '')
+  .replace(/<link rel="(manifest|apple-touch-icon)"[^>]*>\s*/gi, '')
+  .replace(/<meta name="(apple-mobile-web-app-[a-z-]+|mobile-web-app-capable|theme-color)"[^>]*>\s*/gi, '')
   .replace(/<body>\s*/i, '')
   .replace(/<\/body>\s*<\/html>\s*$/i, '');
 await writeFile('app.artifact.html', fragment);
 
 console.log(
-  `Wrote app.html (${Math.round(html.length / 1024)} KB): ${Object.keys(morrisons).length} Morrisons searches, ` +
+  `Wrote app.html and app/public/data.json (${Math.round(html.length / 1024)} KB): ${Object.keys(morrisons).length} Morrisons searches, ` +
     `${lidl.length} Lidl products, ${data.receipts.length} receipt prices.`,
 );
