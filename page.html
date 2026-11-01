@@ -8,13 +8,16 @@
   :root {
     --bg: #f6f4ef; --card: #fff; --ink: #1b1d1a; --muted: #6b6f68; --line: #e4e1d8;
     --head: #1d2a24; --head-ink: #f3f1ea; --good: #0f7a4f; --good-bg: #e3f3ea; --offer: #b5121b; --warn: #8a5a00;
-    --morrisons: #00563f; --lidl: #0050aa;
+    --morrisons: #00563f; --lidl: #0050aa; --head-dim: rgba(255,255,255,.07); --good-on-head: #8fe0b7;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #111311; --card: #1b1e1b; --ink: #ecebe6; --muted: #9a9e95; --line: #2c302a;
+    :root:not([data-theme="light"]) { --bg: #111311; --card: #1b1e1b; --ink: #ecebe6; --muted: #9a9e95; --line: #2c302a;
       --head: #0b0f0d; --good: #48c58f; --good-bg: #163326; --offer: #ff6b6b; --warn: #e0b04f;
-      --morrisons: #3fae84; --lidl: #5b9bff; }
+      --morrisons: #3fae84; --lidl: #5b9bff; color-scheme: dark; }
   }
+  :root[data-theme="dark"] { --bg: #111311; --card: #1b1e1b; --ink: #ecebe6; --muted: #9a9e95; --line: #2c302a;
+      --head: #0b0f0d; --good: #48c58f; --good-bg: #163326; --offer: #ff6b6b; --warn: #e0b04f;
+      --morrisons: #3fae84; --lidl: #5b9bff; color-scheme: dark; }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink);
     font: 16px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -22,15 +25,16 @@
   header { background: var(--head); color: var(--head-ink); padding: calc(12px + env(safe-area-inset-top)) 16px 0; }
   .meta { font-size: 12px; opacity: .7; }
   .totals { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0 8px; }
-  .tot { border-radius: 12px; padding: 10px 12px; background: rgba(255,255,255,.07); border-top: 3px solid; }
+  .tot { border-radius: 12px; padding: 10px 12px; background: var(--head-dim); border-top: 3px solid; }
   .tot.morrisons { border-color: var(--morrisons); } .tot.lidl { border-color: var(--lidl); }
   .tot .s { font-size: 13px; opacity: .85; }
   .tot .n { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
   .tot .c { font-size: 12px; opacity: .7; }
   .verdict { font-size: 14px; line-height: 1.4; padding: 2px 0 10px; }
-  .verdict b { color: #8fe0b7; }
-  nav { display: flex; gap: 4px; position: sticky; top: 0; z-index: 3; background: var(--head); color: var(--head-ink);
-    padding: env(safe-area-inset-top) 12px 0; }
+  .verdict b { color: var(--good-on-head); }
+  nav { display: flex; gap: 4px; position: sticky; z-index: 3; background: var(--head); color: var(--head-ink);
+    padding: 0 12px; top: env(safe-area-inset-top, 0px); }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--head); }
   nav button { flex: 1; background: none; border: 0; padding: 10px 4px 12px; font-size: 14px; opacity: .65;
     border-bottom: 3px solid transparent; cursor: pointer; }
   nav button.on { opacity: 1; font-weight: 600; border-color: var(--head-ink); }
@@ -69,6 +73,15 @@
   .swap { margin-top: 4px; font-size: 12px; color: var(--good); background: none; border: 0; padding: 0; cursor: pointer; }
   .item.done { opacity: .5; } .item.done .name { text-decoration: line-through; }
   .toggle { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); margin: 14px 0 0; }
+  .edit { display: grid; gap: 6px; margin-top: 4px; }
+  .edit input { width: 100%; font: inherit; font-size: 16px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--card); color: var(--ink); }
+  .edit .row { display: flex; gap: 6px; }
+  .edit button { flex: 1; border: 0; border-radius: 8px; padding: 6px; background: var(--good); color: var(--card); font-weight: 600; cursor: pointer; }
+  .edit button.ghost { background: none; color: var(--muted); border: 1px solid var(--line); font-weight: 400; }
+  .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: 10px; font-size: 14px; z-index: 20; max-width: 90vw; }
+  :focus-visible { outline: 2px solid var(--good); outline-offset: 2px; }
   footer { color: var(--muted); font-size: 12px; text-align: center; margin: 24px 16px 40px; line-height: 1.6; }
   footer button { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; cursor: pointer; }
 </style>
@@ -82,10 +95,12 @@
 <nav id="tabs"></nav>
 <div class="demo" id="demo" hidden>Demo: Morrisons prices are real (Morrisons.com, 1 Nov). Lidl is empty until you fetch or add prices.</div>
 <main id="main"></main>
+<div class="toast" id="toast" hidden></div>
 <footer>
   Prices compare pack prices, so check sizes where they differ.<br>
   Morrisons: online prices. Lidl: website listings, your receipts and prices you add.<br><br>
   <button id="export">Copy prices I added as CSV</button>
+  <textarea id="exportbox" rows="4" readonly hidden style="width:100%;margin-top:10px;font:13px ui-monospace,monospace;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px"></textarea>
 </footer>
 <script>
 const DATA = /*__DATA__*/null;
@@ -162,12 +177,29 @@ function tagFor(o) {
     (o.available === false && o.stockNote ? '<div class="tag you">' + esc(o.stockNote) + '</div>' : '');
 }
 
+let editing = null; // { i, s } while a price field is open
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 3500);
+}
+function editor(i, s) {
+  const cur = st.mine[s]?.[DATA.rows[i].term];
+  return '<div class="edit"><label class="nm" for="price-' + i + '-' + s + '">' + LABEL[s] + ' price, one pack (£)</label>' +
+    '<input id="price-' + i + '-' + s + '" inputmode="decimal" autocomplete="off" placeholder="e.g. 0.59" value="' + (cur ? cur.price.toFixed(2) : '') + '">' +
+    '<div class="row"><button data-save="' + i + '" data-store="' + s + '">Save</button>' +
+    '<button class="ghost" data-cancel="1">' + (cur ? 'Cancel' : 'Cancel') + '</button></div>' +
+    (cur ? '<button class="ghost" data-remove="' + i + '" data-store="' + s + '">Remove my price</button>' : '') + '</div>';
+}
+
 function compareView(sm) {
   return DATA.rows.map((r, i) => {
     const c = S.map((s) => cost(i, s));
     const bothKnown = c.every((x) => x != null);
     const cols = S.map((s, k) => {
       const o = chosen(i, s);
+      const isEditing = editing && editing.i === i && editing.s === s;
+      if (isEditing) return '<div class="opt ' + s + ' none"><div class="st">' + LABEL[s] + '</div>' + editor(i, s) + '</div>';
       if (!o) return '<div class="opt ' + s + ' none"><div class="st">' + LABEL[s] + '</div>' +
         '<div class="nm">Not listed online</div><button class="add" data-add="' + i + '" data-store="' + s + '">+ Add price</button></div>';
       const best = bothKnown && c[k] < c[1 - k] - 0.004;
@@ -178,7 +210,7 @@ function compareView(sm) {
         (best ? '<div class="sv">saves ' + gbp(c[1 - k] - c[k]) + '</div>' : '') +
         (opts.length > 1 ? '<button class="swap" data-swap="' + i + '" data-store="' + s + '">Swap ' +
           (((st.pick[s]?.[i] || 0) % opts.length) + 1) + '/' + opts.length + '</button>' : '') +
-        (s !== 'morrisons' ? ' <button class="swap" data-add="' + i + '" data-store="' + s + '">Edit</button>' : '') +
+        ' <button class="swap" data-add="' + i + '" data-store="' + s + '">Edit price</button>' +
         '</div></div>';
     }).join('');
     return '<div class="card cmp"><div class="top"><span>' + esc(r.term) + '</span><span class="q">' +
@@ -214,36 +246,83 @@ function shopView(s, sm) {
 function render() {
   const sm = summary();
   header(sm);
-  document.getElementById('main').innerHTML = st.tab === 'compare' ? compareView(sm) : shopView(st.tab, sm);
+  patch(document.getElementById('main'), st.tab === 'compare' ? compareView(sm) : shopView(st.tab, sm));
+}
+
+// Replace only the cards that changed, so photos in untouched cards aren't
+// thrown away and reloaded on every tap (that caused the image flashing).
+function patch(root, html) {
+  const next = document.createElement('div');
+  next.innerHTML = html;
+  const fresh = [...next.children];
+  const old = [...root.children];
+  fresh.forEach((node, k) => {
+    const cur = old[k];
+    if (!cur) root.appendChild(node);
+    else if (cur.outerHTML !== node.outerHTML) root.replaceChild(node, cur);
+  });
+  for (let k = fresh.length; k < old.length; k++) old[k].remove();
+}
+
+function savePrice(i, s) {
+  const r = DATA.rows[i];
+  const el = document.getElementById('price-' + i + '-' + s);
+  const price = parseFloat(String(el ? el.value : '').replace(/[£\s]/g, ''));
+  if (!(price > 0)) { toast('Enter a price like 0.59'); return false; }
+  st.mine[s] ||= {};
+  st.mine[s][r.term] = { name: r.term, price, date: new Date().toISOString().slice(0, 10) };
+  if (st.pick[s]) st.pick[s][i] = 0;
+  editing = null;
+  toast('Saved ' + LABEL[s] + ' price for ' + r.term);
+  return true;
 }
 
 document.addEventListener('click', (e) => {
-  const t = e.target.closest('[data-tab],[data-swap],[data-add],[data-tick],#export');
+  const t = e.target.closest('[data-tab],[data-swap],[data-add],[data-save],[data-cancel],[data-remove],[data-tick],#export');
   if (!t) return;
-  if (t.dataset.tab) { st.tab = t.dataset.tab; window.scrollTo(0, 0); }
+  if (t.dataset.tab) { st.tab = t.dataset.tab; editing = null; window.scrollTo(0, 0); }
   else if (t.dataset.swap) { const s = t.dataset.store, i = +t.dataset.swap; (st.pick[s] ||= {})[i] = ((st.pick[s][i] || 0) + 1); }
   else if (t.dataset.add) {
-    const s = t.dataset.store, r = DATA.rows[+t.dataset.add];
-    const cur = st.mine[s]?.[r.term];
-    const p = prompt(LABEL[s] + ' price for "' + r.term + '" (one pack, £). Leave empty to remove.', cur ? cur.price.toFixed(2) : '');
-    if (p === null) return;
-    const price = parseFloat(String(p).replace(/[£\s]/g, ''));
-    st.mine[s] ||= {};
-    if (!p.trim() || !(price > 0)) delete st.mine[s][r.term];
-    else st.mine[s][r.term] = { name: (cur && cur.name) || r.term, price, date: new Date().toISOString().slice(0, 10) };
-    if (st.pick[s]) st.pick[s][+t.dataset.add] = 0;
+    editing = { i: +t.dataset.add, s: t.dataset.store };
+    save(); render();
+    document.getElementById('price-' + editing.i + '-' + editing.s)?.focus();
+    return;
+  }
+  else if (t.dataset.save) { if (!savePrice(+t.dataset.save, t.dataset.store)) return; }
+  else if (t.dataset.cancel) { editing = null; }
+  else if (t.dataset.remove) {
+    const s = t.dataset.store, r = DATA.rows[+t.dataset.remove];
+    if (st.mine[s]) delete st.mine[s][r.term];
+    editing = null; toast('Removed your price for ' + r.term);
   }
   else if (t.dataset.tick) { const s = t.dataset.store, i = +t.dataset.tick; (st.done[s] ||= {})[i] = !st.done[s]?.[i]; }
   else if (t.id === 'export') {
     const lines = [];
     for (const s of Object.keys(st.mine)) for (const [term, m] of Object.entries(st.mine[s]))
       lines.push(s + ': ' + term + ',' + m.name + ',' + m.price.toFixed(2) + ',' + m.date);
-    const txt = lines.length ? lines.join('\n') : '';
-    if (!txt) { alert('No prices added yet.'); return; }
-    navigator.clipboard?.writeText(txt).then(() => alert('Copied. Paste each line (without the "store: " part) into prices/<store>.csv.'),
-      () => prompt('Copy these lines:', txt));
+    if (!lines.length) { toast('No prices added yet'); return; }
+    const txt = lines.join('\n');
+    const box = document.getElementById('exportbox');
+    box.value = txt; box.hidden = false;
+    const done = () => toast('Copied. Paste into prices/lidl.csv without the "lidl: " part');
+    try { navigator.clipboard.writeText(txt).then(done, () => { box.select(); toast('Select and copy the lines below'); }); }
+    catch (err) { box.select(); toast('Select and copy the lines below'); }
+    return;
   }
   save(); render();
+});
+// A product photo that fails to load falls back to the placeholder instead of a broken icon.
+document.addEventListener('error', (e) => {
+  const img = e.target;
+  if (img.tagName !== 'IMG') return;
+  const ph = document.createElement('div');
+  ph.className = 'ph'; ph.textContent = '🛒';
+  img.replaceWith(ph);
+}, true);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('price-') && editing) {
+    if (savePrice(editing.i, editing.s)) { save(); render(); }
+  }
 });
 document.addEventListener('change', (e) => { if (e.target.id === 'split') { st.split = e.target.checked; save(); render(); } });
 render();

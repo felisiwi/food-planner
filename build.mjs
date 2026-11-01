@@ -45,5 +45,18 @@ const payload = JSON.stringify({ rows, stores: STORES, updatedAt: db.updatedAt |
   '\\u003c',
 );
 const template = await readFile(new URL('./page.html', import.meta.url), 'utf8');
-await writeFile(OUT, template.replace('/*__DATA__*/null', payload));
+const page = template.replace('/*__DATA__*/null', payload);
+await writeFile(OUT, page);
+
+// Same page without the document wrapper, for publishing as a claude.ai artifact
+// (the host adds its own doctype, head and body).
+const fragment = page
+  .replace(/<!doctype html>\s*/i, '')
+  .replace(/<html[^>]*>\s*/i, '')
+  .replace(/<\/?head>\s*/gi, '')
+  .replace(/<meta charset[^>]*>\s*/i, '')
+  .replace(/<meta name="viewport"[^>]*>\s*/i, '')
+  .replace(/<body>\s*/i, '')
+  .replace(/<\/body>\s*<\/html>\s*$/i, '');
+await writeFile(OUT.replace(/\.html$/, '') + '.artifact.html', fragment);
 console.log(`Wrote ${OUT} (${rows.length} items)`);
