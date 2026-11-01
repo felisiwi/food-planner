@@ -18,3 +18,5 @@ app.artifact.html
 .fp-env
 .vercel
 .env*
+data/worker.log
+data/refresh.log

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.felix.food-planner-worker</string>
+  <key>ProgramArguments</key><array><string>/opt/homebrew/bin/node</string><string>worker.mjs</string></array>
+  <key>WorkingDirectory</key><string>/Users/felix/GitHub/food-planner</string>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/Users/felix/.local/bin</string></dict>
+  <key>StartInterval</key><integer>120</integer>
+  <key>StandardOutPath</key><string>/Users/felix/GitHub/food-planner/data/worker.log</string>
+  <key>StandardErrorPath</key><string>/Users/felix/GitHub/food-planner/data/worker.log</string>
+</dict>
+</plist>
