@@ -7,3 +7,7 @@ list.html
 data/lidl-receipts/
 data/lidl-receipt-prices.json
 .venv/
+data/compare*.json
+data/compare.log
+compare.html
+compare.artifact.html

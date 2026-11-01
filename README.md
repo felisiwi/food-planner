@@ -66,6 +66,17 @@ node lidl-receipts.mjs && node build.mjs
 Receipts are personal, so they stay in `data/`, which git ignores. Receipt names are often
 shortened, so loose matches show "Check it's the right item" on the page.
 
+## Lidl vs Morrisons, product by product
+
+```sh
+node fetch.mjs --store lidl   # Lidl's whole online range
+node compare.mjs              # ~15-20 min the first time, cached for 7 days after
+open compare.html
+```
+
+Takes everyday food Lidl lists online plus your receipt items, finds the cheapest matching
+Morrisons product for each, and compares per kg or litre where both shops give it.
+
 ## Being polite
 
 Both sites limit automated traffic. `fetch.mjs` stays well inside that: one request every

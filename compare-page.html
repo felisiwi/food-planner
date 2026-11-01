@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lidl vs Morrisons</title>
+<style>
+  :root {
+    --bg: #f6f4ef; --card: #fff; --ink: #1b1d1a; --muted: #6b6f68; --line: #e4e1d8;
+    --head: #1d2a24; --head-ink: #f3f1ea; --head-dim: rgba(255,255,255,.08);
+    --good: #0f7a4f; --good-bg: #e3f3ea; --warn: #8a5a00;
+    --morrisons: #00563f; --lidl: #0050aa; --lidl-bg: #e5eefa; --morrisons-bg: #e3f1ea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #111311; --card: #1b1e1b; --ink: #ecebe6; --muted: #9a9e95; --line: #2c302a;
+      --head: #0b0f0d; --good: #48c58f; --good-bg: #163326; --warn: #e0b04f; --morrisons: #3fae84; --lidl: #5b9bff;
+      --lidl-bg: #15233a; --morrisons-bg: #13281f; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --bg: #111311; --card: #1b1e1b; --ink: #ecebe6; --muted: #9a9e95; --line: #2c302a;
+    --head: #0b0f0d; --good: #48c58f; --good-bg: #163326; --warn: #e0b04f; --morrisons: #3fae84; --lidl: #5b9bff;
+    --lidl-bg: #15233a; --morrisons-bg: #13281f; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  button { font: inherit; color: inherit; }
+  header { background: var(--head); color: var(--head-ink); padding: calc(14px + env(safe-area-inset-top)) 16px 14px; }
+  header h1 { margin: 0; font-size: 20px; text-wrap: balance; }
+  .meta { font-size: 12px; opacity: .7; margin-top: 2px; }
+  .score { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+  .score div { background: var(--head-dim); border-radius: 12px; padding: 10px; border-top: 3px solid var(--head-dim); }
+  .score .l { border-color: var(--lidl); } .score .m { border-color: var(--morrisons); }
+  .score b { display: block; font-size: 24px; font-variant-numeric: tabular-nums; }
+  .score span { font-size: 12px; opacity: .8; }
+  .note { font-size: 13px; opacity: .85; margin-top: 10px; line-height: 1.4; }
+  .controls { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 3; background: var(--bg); border-bottom: 1px solid var(--line);
+    padding: 10px 16px; display: grid; gap: 8px; }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--head); }
+  .chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  .chip { flex: none; border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 6px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .chip.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  main { padding: 8px 16px 40px; max-width: 720px; margin: 0 auto; }
+  .row { background: var(--card); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 8px; overflow: hidden; }
+  .row .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 10px 12px 0; }
+  .row .t { font-weight: 600; font-size: 15px; text-transform: capitalize; min-width: 0; }
+  .badge { flex: none; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
+  .badge.l { background: var(--lidl-bg); color: var(--lidl); } .badge.m { background: var(--morrisons-bg); color: var(--morrisons); }
+  .badge.e { background: var(--line); color: var(--muted); }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px; }
+  .side { display: grid; grid-template-columns: 44px 1fr; gap: 8px; align-items: start; padding: 8px; border-radius: 10px; border: 1px solid var(--line); min-width: 0; }
+  .side.win { background: var(--good-bg); border-color: var(--good); }
+  .side img, .side .ph { width: 44px; height: 44px; border-radius: 8px; object-fit: contain; background: #fff; }
+  .side .ph { display: grid; place-items: center; background: var(--line); color: var(--muted); font-size: 16px; }
+  .st { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+  .side.lidl .st { color: var(--lidl); } .side.morr .st { color: var(--morrisons); }
+  .pr { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .u { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .nm { font-size: 12px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .tag { font-size: 11px; color: var(--warn); font-weight: 600; }
+  .basis { font-size: 11px; color: var(--muted); padding: 0 12px 10px; }
+  .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+  footer { color: var(--muted); font-size: 12px; text-align: center; margin: 8px 16px 40px; line-height: 1.6; }
+  :focus-visible { outline: 2px solid var(--good); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Lidl vs Morrisons</h1>
+  <div class="meta" id="meta"></div>
+  <div class="score" id="score"></div>
+  <div class="note" id="note"></div>
+</header>
+<div class="controls">
+  <div class="chips" id="sections"></div>
+  <div class="chips" id="sort"></div>
+</div>
+<main id="list"></main>
+<footer>
+  Lidl: everyday food listed on lidl.co.uk (Lidl Plus price where shown) and prices from receipts.<br>
+  Morrisons: cheapest matching product on groceries.morrisons.com.<br>
+  Compared per kg or litre when both shops give it, otherwise per pack, so check sizes.
+</footer>
+<script>
+const DATA = /*__DATA__*/null;
+let st = { section: 'All', sort: 'lidl' };
+try { st = Object.assign(st, JSON.parse(localStorage.getItem('cmp-view')) || {}); } catch (e) {}
+const save = () => { try { localStorage.setItem('cmp-view', JSON.stringify(st)); } catch (e) {} };
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const gbp = (n) => '£' + n.toFixed(2);
+const unitTxt = (u) => (u ? gbp(u.v) + '/' + u.u : '');
+const thumb = (src) => (src ? '<img loading="lazy" alt="" src="' + esc(src) + '">' : '<div class="ph">🛒</div>');
+const median = (a) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
+
+function render() {
+  const rows = DATA.rows;
+  const lw = rows.filter((r) => r.saving > 0.5), mw = rows.filter((r) => r.saving < -0.5);
+  document.getElementById('meta').textContent = rows.length + ' products compared · ' +
+    new Date(DATA.createdAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+  document.getElementById('score').innerHTML =
+    '<div class="l"><b>' + lw.length + '</b><span>cheaper at Lidl</span></div>' +
+    '<div class="m"><b>' + mw.length + '</b><span>cheaper at Morrisons</span></div>' +
+    '<div><b>' + (rows.length - lw.length - mw.length) + '</b><span>about the same</span></div>';
+  document.getElementById('note').textContent = lw.length
+    ? 'Where Lidl is cheaper, typically by ' + Math.round(median(lw.map((r) => r.saving))) + '%.' +
+      (mw.length ? ' Where Morrisons is cheaper, typically by ' + Math.round(median(mw.map((r) => -r.saving))) + '%.' : '')
+    : '';
+
+  const sections = ['All', ...new Set(rows.map((r) => r.section))];
+  document.getElementById('sections').innerHTML = sections.map((s) =>
+    '<button class="chip' + (st.section === s ? ' on' : '') + '" data-section="' + esc(s) + '">' + esc(s) +
+    (s === 'All' ? '' : ' ' + rows.filter((r) => r.section === s).length) + '</button>').join('');
+  const sorts = [['lidl', 'Biggest Lidl saving'], ['morr', 'Biggest Morrisons saving'], ['az', 'A–Z']];
+  document.getElementById('sort').innerHTML = sorts.map(([k, l]) =>
+    '<button class="chip' + (st.sort === k ? ' on' : '') + '" data-sort="' + k + '">' + l + '</button>').join('');
+
+  let list = rows.filter((r) => st.section === 'All' || r.section === st.section);
+  list = [...list].sort(st.sort === 'lidl' ? (a, b) => b.saving - a.saving : st.sort === 'morr' ? (a, b) => a.saving - b.saving : (a, b) => a.term.localeCompare(b.term));
+  document.getElementById('list').innerHTML = list.length ? list.map((r) => {
+    const lWin = r.saving > 0.5, mWin = r.saving < -0.5;
+    const badge = lWin ? '<span class="badge l">Lidl ' + Math.round(r.saving) + '% cheaper</span>'
+      : mWin ? '<span class="badge m">Morrisons ' + Math.round(-r.saving) + '% cheaper</span>' : '<span class="badge e">Same</span>';
+    const L = r.lidl, M = r.morrisons;
+    return '<div class="row"><div class="top"><span class="t">' + esc(r.term) + '</span>' + badge + '</div><div class="cols">' +
+      '<div class="side lidl' + (lWin ? ' win' : '') + '">' + thumb(L.image) + '<div><div class="st">Lidl</div><div class="pr">' + gbp(L.price) + '</div>' +
+        (L.unit ? '<div class="u">' + unitTxt(L.unit) + '</div>' : '') + '<div class="nm">' + esc(L.name) + '</div>' +
+        (L.source === 'receipt' ? '<div class="tag">Receipt' + (L.date ? ', ' + esc(L.date) : '') + '</div>' : L.offer ? '<div class="tag">' + esc(L.offer) + '</div>' : '') + '</div></div>' +
+      '<div class="side morr' + (mWin ? ' win' : '') + '">' + thumb(M.image) + '<div><div class="st">Morrisons</div><div class="pr">' + gbp(M.price) + '</div>' +
+        (M.unit ? '<div class="u">' + unitTxt(M.unit) + '</div>' : '') + '<div class="nm">' + esc(M.name) + '</div>' +
+        (M.offer ? '<div class="tag">' + esc(M.offer) + '</div>' : '') + '</div></div>' +
+      '</div><div class="basis">Compared ' + esc(r.basis) + '</div></div>';
+  }).join('') : '<div class="empty">Nothing in this section yet.</div>';
+}
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-section],[data-sort]');
+  if (!t) return;
+  if (t.dataset.section) st.section = t.dataset.section;
+  if (t.dataset.sort) st.sort = t.dataset.sort;
+  save(); render();
+});
+document.addEventListener('error', (e) => {
+  if (e.target.tagName !== 'IMG') return;
+  const ph = document.createElement('div'); ph.className = 'ph'; ph.textContent = '🛒'; e.target.replaceWith(ph);
+}, true);
+render();
+</script>
+</body>
+</html>
