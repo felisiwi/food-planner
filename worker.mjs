@@ -28,6 +28,7 @@ async function rpc(name, args) {
 const log = (...a) => console.log(new Date().toISOString().slice(0, 19), ...a);
 
 const jobs = await rpc('fp_claim_requests', {});
+let done = 0;
 for (const { id, meals } of jobs || []) {
   log(`request ${id}: ${String(meals).slice(0, 80).replace(/\n/g, ' ')}`);
   const r = spawnSync(CLAUDE, ['-p', '--tools', '', '--no-session-persistence', '--model', 'sonnet', '--output-format', 'text'], {
@@ -38,9 +39,16 @@ for (const { id, meals } of jobs || []) {
     const items = cleanIngredients(r.stdout);
     await rpc('fp_finish', { rid: id, result: items, err: null });
     log(`request ${id}: ${items.length} ingredients`);
+    done++;
   } catch (e) {
     const msg = e?.message || e?.code || String(e);
     await rpc('fp_finish', { rid: id, result: null, err: msg }).catch(() => {});
     log(`request ${id} failed: ${msg}`);
   }
+}
+
+// Price the new items soon rather than waiting for the nightly run.
+if (done) {
+  const u = spawnSync('/bin/zsh', [new URL('./mac/update-prices.sh', import.meta.url).pathname], { encoding: 'utf8', timeout: 20 * 60 * 1000 });
+  log((u.stdout || '').trim() || 'prices updated');
 }

@@ -20,3 +20,5 @@ app.artifact.html
 .env*
 data/worker.log
 data/refresh.log
+data/plan-list.txt
+data/.update.lock/
