@@ -62,8 +62,16 @@ export function lidlFor(term) {
 }
 
 export function aldiFor(term) {
-  return orSimilar(term, (t) => rank(t, aldiMatch(DATA.aldi || [], t, 12)));
+  // Products looked up for this exact item come first; if the name doesn't
+  // obviously match (e.g. "tinned fish" -> tuna), they're labelled as similar.
+  const looked = (DATA.aldi || []).filter((p) => p.term === term).map((p) => (relevant(term, p.name) ? p : { ...p, similar: 'looked up for this item' }));
+  const found = orSimilar(term, (t) => rank(t, aldiMatch(DATA.aldi || [], t, 12)));
+  const seen = new Set(looked.map((p) => p.name));
+  return [...rank(term, looked).map((p) => ({ ...p, match: true })), ...found.filter((p) => !seen.has(p.name))];
 }
+
+// Items Aldi's site lists but shows no price for right now ("currently not available").
+export const aldiNoPrice = (term) => DATA.aldiNoPrice?.[term] || null;
 
 export const gbp = (n) => '£' + Number(n).toFixed(2);
 

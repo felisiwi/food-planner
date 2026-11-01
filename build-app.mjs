@@ -31,7 +31,8 @@ const lidl = (results.ranges?.lidl?.products || []).filter((p) => p.isFood && p.
 
 // Aldi: first page of each food category (data/aldi-range.json, made by aldi.mjs).
 const aldiRange = await read('data/aldi-range.json', { products: [] });
-const aldi = aldiRange.products.map(aldiProduct).filter((p) => p.price > 0);
+const aldiLookups = await read('data/aldi-lookups.json', { products: [], unpriced: {} });
+const aldi = [...aldiRange.products, ...aldiLookups.products].map(aldiProduct).filter((p) => p.price > 0);
 
 // Example list for first use: list.txt.
 // list.txt only says "2 x"; these are illustrative amounts for a big veggie lasagna (about 8 portions) so the
@@ -65,6 +66,7 @@ const data = {
   lidl,
   aldi,
   aldiUpdatedAt: aldiRange.fetchedAt || null,
+  aldiNoPrice: aldiLookups.unpriced || {},
   receipts: Object.values(receipts.items || {}),
   example,
 };

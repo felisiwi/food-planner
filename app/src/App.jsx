@@ -5,7 +5,7 @@ import { Switch } from '@base-ui/react/switch';
 import { Drawer } from '@base-ui/react/drawer';
 import { Dialog } from '@base-ui/react/dialog';
 import { Toast } from '@base-ui/react/toast';
-import { DATA, morrisonsFor, lidlFor, aldiFor, gbp, perUnit, unitText, orderOptions, choosePack, sizeText, needAmount, probablyHave } from './data.js';
+import { DATA, morrisonsFor, lidlFor, aldiFor, aldiNoPrice, gbp, perUnit, unitText, orderOptions, choosePack, sizeText, needAmount, probablyHave } from './data.js';
 import { useCapability, useDoc, ingredientsFor, sampleErrorText } from './claude.js';
 
 const isWeb = () => !!window.__FP_WEB__;
@@ -602,7 +602,7 @@ function Basket({ rows, active, vsMorrisons, toggleShop, isExample }) {
         </tbody>
       </table>
       {active.some((s) => s.id === 'aldi') && (
-        <p className="note">Aldi prices come from aldi.co.uk (the first page of each food category, about 1,000 everyday products, checked 1 Nov), so a few items may be missing. Lidl only shows part of its range online; Aldi’s prices are usually close to Lidl’s.</p>
+        <p className="note">Aldi prices come from aldi.co.uk (about 1,000 everyday products from its category pages, plus items looked up one by one; checked 1 Nov). Some products are on Aldi’s site without a price, so they can’t be compared. Lidl only shows part of its range online; Aldi’s prices are usually close to Lidl’s.</p>
       )}
     </section>
   );
@@ -638,6 +638,8 @@ function CompareRow({ r, active, onPrice, onPick }) {
                   <BigPack sel={sel} onPick={(v) => onPick(s.id, v)} />
                   <OptionsSheet sel={sel} alts={r.alts[s.id]} it={r.it} what={`${r.it.item} at ${s.label}`} onPick={(v) => onPick(s.id, v)} />
                 </>
+              ) : s.id === 'aldi' && aldiNoPrice(r.k) ? (
+                <span className="side-nm">On Aldi’s site, but no price shown right now ({aldiNoPrice(r.k)[0].name})</span>
               ) : (
                 <span className="side-nm">Not listed online</span>
               )}
