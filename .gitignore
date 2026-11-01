@@ -2,3 +2,4 @@ node_modules/
 .DS_Store
 data/results.json
 list.html
+.lidl-sample.html

@@ -12,6 +12,7 @@ import { existsSync } from 'node:fs';
 import * as morrisons from './lib/morrisons.mjs';
 import * as lidl from './lib/lidl.mjs';
 import { parseList } from './lib/list.mjs';
+import { rank } from './lib/match.mjs';
 
 const args = process.argv.slice(2);
 const only = args.includes('--store') ? args[args.indexOf('--store') + 1] : null;
@@ -19,7 +20,9 @@ const LIST = args.find((a) => a.endsWith('.txt')) || 'list.txt';
 const OUT = 'data/results.json';
 const DELAY_MS = 6000;
 const CACHE_MS = 24 * 60 * 60 * 1000;
-const UA = 'food-planner/0.2 (personal shopping-list tool; low volume)';
+const UA = 'food-planner/0.3 (personal shopping-list tool; low volume)';
+// Bump when the extracted data changes shape, so old cached results are refetched once.
+const CACHE_VERSION = 3;
 const STORES = [morrisons, lidl].filter((s) => !only || s.id === only);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -36,7 +39,7 @@ for (const store of STORES) {
   let fetched = 0;
   for (const { term } of items) {
     const hit = cache[term];
-    if (hit && Date.now() - hit.fetchedAt < CACHE_MS) {
+    if (hit && hit.v === CACHE_VERSION && Date.now() - hit.fetchedAt < CACHE_MS) {
       console.log(`  cached  ${term}`);
       continue;
     }
@@ -48,10 +51,12 @@ for (const store of STORES) {
       break;
     }
     try {
-      const products = store.extract(await res.text(), 4, term);
-      cache[term] = { fetchedAt: Date.now(), products };
-      const top = products[0];
-      console.log(`  ok      ${term} → ${top ? `${top.name} £${top.price.toFixed(2)}` : 'not listed online'}`);
+      const products = store.extract(await res.text(), 12, term);
+      cache[term] = { v: CACHE_VERSION, fetchedAt: Date.now(), products };
+      const top = rank(term, products)[0];
+      console.log(
+        `  ok      ${term} → ${top ? `${top.name} £${top.price.toFixed(2)}${top.match ? ' (cheapest match)' : ' (no exact match)'}` : 'not listed online'}`,
+      );
     } catch (e) {
       console.error(`  failed  ${term}: ${e.message}`);
     }

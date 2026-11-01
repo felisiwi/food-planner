@@ -157,7 +157,9 @@ function thumb(o) { return o && o.image ? '<img loading="lazy" alt="" src="' + e
 function tagFor(o) {
   if (o.source === 'you') return '<div class="tag you">Added by you</div>';
   if (o.source === 'manual') return '<div class="tag you">From your price list' + (o.date ? ', ' + esc(o.date) : '') + '</div>';
-  return o.offer ? '<div class="tag">' + esc(o.offer) + '</div>' : '';
+  return (o.match === false ? '<div class="tag you">Closest result, not an exact match</div>' : '') +
+    (o.offer ? '<div class="tag">' + esc(o.offer) + '</div>' : '') +
+    (o.available === false && o.stockNote ? '<div class="tag you">' + esc(o.stockNote) + '</div>' : '');
 }
 
 function compareView(sm) {

@@ -5,6 +5,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { parseCsv } from './lib/list.mjs';
+import { rank } from './lib/match.mjs';
 
 const IN = process.argv[2] || 'data/results.json';
 const OUT = process.argv[3] || 'list.html';
@@ -32,7 +33,7 @@ for (const s of STORES) {
 const rows = (db.list || []).map(({ qty, term }) => {
   const stores = {};
   for (const s of STORES) {
-    const online = db.stores?.[s.id]?.[term]?.products || [];
+    const online = rank(term, db.stores?.[s.id]?.[term]?.products || []);
     const m = manual[s.id][term];
     stores[s.id] = m ? [m, ...online] : online;
   }
