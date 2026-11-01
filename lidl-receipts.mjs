@@ -2,11 +2,11 @@
 // into a Lidl price you actually paid, saved to data/lidl-receipt-prices.json.
 // build.mjs then uses those prices for list items Lidl doesn't list online.
 //
-// One-time setup (on your Mac):
-//   pip install ilidl            # needs Python 3.12+
+// One-time setup (on your Mac), installed inside this folder:
+//   python3 -m venv .venv && .venv/bin/pip install ilidl   # needs Python 3.12+
 //   log in at https://www.lidl.co.uk in Firefox or Chrome yourself
-//   ilidl login --browser firefox   (or chrome)
-//   ilidl doctor                    # checks the setup
+//   .venv/bin/ilidl login --browser chrome   (or firefox)
+//   .venv/bin/ilidl doctor                   # checks the setup
 //
 // Then: node lidl-receipts.mjs [--limit 20]
 //
@@ -20,6 +20,8 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 
 const run = promisify(execFile);
+// Prefer the copy installed in this folder's .venv, then one on PATH.
+const ILIDL = existsSync('.venv/bin/ilidl') ? '.venv/bin/ilidl' : 'ilidl';
 const args = process.argv.slice(2);
 const LIMIT = args.includes('--limit') ? Number(args[args.indexOf('--limit') + 1]) : 20;
 const RAW = 'data/lidl-receipts';
@@ -27,14 +29,14 @@ const OUT = 'data/lidl-receipt-prices.json';
 
 async function ilidl(...a) {
   try {
-    const { stdout } = await run('ilidl', a, { maxBuffer: 20 * 1024 * 1024 });
+    const { stdout } = await run(ILIDL, a, { maxBuffer: 20 * 1024 * 1024 });
     return JSON.parse(stdout);
   } catch (e) {
     if (e.code === 'ENOENT') {
-      console.error('ilidl is not installed. Run: pip install ilidl   (needs Python 3.12+)');
+      console.error('ilidl is not installed. Run: python3 -m venv .venv && .venv/bin/pip install ilidl');
     } else {
       console.error(`ilidl ${a.join(' ')} failed:\n${(e.stderr || e.message).trim()}`);
-      console.error('\nIf it mentions login or session, log in at lidl.co.uk in your browser, then run: ilidl login --browser firefox');
+      console.error('\nIf it mentions login or session, log in at lidl.co.uk in your browser, then run: .venv/bin/ilidl login --browser chrome');
     }
     process.exit(1);
   }

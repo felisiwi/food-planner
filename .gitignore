@@ -6,3 +6,4 @@ list.html
 *.artifact.html
 data/lidl-receipts/
 data/lidl-receipt-prices.json
+.venv/

@@ -51,10 +51,10 @@ Lidl Plus receipts. `lidl-receipts.mjs` reads them with the unofficial
 One-time setup:
 
 ```sh
-pip install ilidl              # needs Python 3.12+
-# log in at https://www.lidl.co.uk in Firefox or Chrome yourself, then:
-ilidl login --browser firefox  # or chrome
-ilidl doctor
+python3 -m venv .venv && .venv/bin/pip install ilidl   # needs Python 3.12+
+# log in at https://www.lidl.co.uk in Chrome or Firefox yourself, then:
+.venv/bin/ilidl login --browser chrome                 # or firefox
+.venv/bin/ilidl doctor
 ```
 
 Then, after any Lidl shop:
