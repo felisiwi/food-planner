@@ -1,0 +1,136 @@
+/* Layout: one phone-width column; a dark header with both shops' totals,
+   sticky tabs, then cards. Morrisons green and Lidl blue mark the two shops. */
+:root {
+  --bg: #f5f3ee; --card: #ffffff; --ink: #1c1e1b; --muted: #676b64; --line: #e3e0d7;
+  --head: #1d2a24; --head-ink: #f3f1ea; --head-dim: rgba(255, 255, 255, 0.08); --head-good: #8fe0b7;
+  --good: #0f7a4f; --good-bg: #e2f2e9; --warn: #8a5a00; --offer: #b5121b;
+  --morrisons: #00563f; --morrisons-bg: #e2f1ea; --lidl: #0050aa; --lidl-bg: #e5eefa;
+  --font: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111311; --card: #1b1e1b; --ink: #ecebe6; --muted: #9a9e95; --line: #2c302a;
+    --head: #0b0f0d; --good: #48c58f; --good-bg: #163326; --warn: #e0b04f; --offer: #ff6b6b;
+    --morrisons: #3fae84; --morrisons-bg: #13281f; --lidl: #5b9bff; --lidl-bg: #15233a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111311; --card: #1b1e1b; --ink: #ecebe6; --muted: #9a9e95; --line: #2c302a;
+  --head: #0b0f0d; --good: #48c58f; --good-bg: #163326; --warn: #e0b04f; --offer: #ff6b6b;
+  --morrisons: #3fae84; --morrisons-bg: #13281f; --lidl: #5b9bff; --lidl-bg: #15233a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.4 var(--font); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--head); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--good); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+.head { background: var(--head); color: var(--head-ink); }
+.head-inner, .tabs, .panel {
+  max-width: 680px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.head-inner { padding-block: 14px 12px; }
+.head h1 { margin: 0; font-size: 21px; letter-spacing: -0.01em; }
+.meta { margin: 2px 0 0; font-size: 12px; opacity: 0.7; }
+.totals { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.tot { display: grid; background: var(--head-dim); border-radius: 12px; padding: 10px 12px; border-top: 3px solid; }
+.tot.morrisons { border-color: var(--morrisons); } .tot.lidl { border-color: var(--lidl); }
+.tot-s { font-size: 13px; opacity: 0.85; }
+.tot-n { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tot-c { font-size: 12px; opacity: 0.7; }
+.verdict { margin: 10px 0 0; font-size: 14px; }
+.verdict b { color: var(--head-good); }
+
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 3; display: flex; gap: 4px; background: var(--bg);
+  border-bottom: 1px solid var(--line); max-width: none; }
+.tab { position: relative; flex: 1; max-width: 220px; background: none; border: 0; padding: 12px 4px; font-size: 15px; color: var(--muted); cursor: pointer; }
+.tab[data-active] { color: var(--ink); font-weight: 600; }
+.tab-ind { position: absolute; bottom: -1px; left: var(--active-tab-left); width: var(--active-tab-width); height: 3px; border-radius: 3px 3px 0 0;
+  background: var(--ink); transition: left 0.2s ease, width 0.2s ease; }
+@media (prefers-reduced-motion: reduce) { .tab-ind { transition: none; } }
+.panel { padding-block: 14px 48px; }
+
+.label { display: block; font-weight: 600; margin-bottom: 6px; }
+.meals, .input { width: 100%; font: inherit; font-size: 16px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--card); color: var(--ink); }
+.meals { resize: vertical; min-height: 84px; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.btn { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 9px 14px; cursor: pointer; }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 600; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.note { color: var(--muted); font-size: 13px; margin: 12px 0 0; }
+.error { color: var(--offer); font-size: 14px; margin: 10px 0 0; }
+.link { background: none; border: 0; padding: 0; color: var(--good); font-size: 13px; cursor: pointer; margin-top: 4px; justify-self: start; }
+
+.h2 { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--muted); margin: 22px 0 8px; }
+.h2-n { text-transform: none; letter-spacing: 0; }
+.ing { list-style: none; margin: 0; padding: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
+.ing-row { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.ing-row:first-child { border-top: 0; }
+.ing-label { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer; }
+.ing-name { text-transform: capitalize; }
+.ing-row.have .ing-name { color: var(--muted); text-decoration: line-through; }
+.ing-amt { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.pill { font-size: 11px; color: var(--warn); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; }
+.x { background: none; border: 0; color: var(--muted); font-size: 20px; line-height: 1; padding: 0 2px; cursor: pointer; }
+.add-row { display: flex; gap: 8px; margin-top: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 5px 11px; font-size: 13px; cursor: pointer; }
+
+.cb { flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--muted);
+  background: var(--card); color: var(--card); padding: 0; cursor: pointer; }
+.cb.big { width: 26px; height: 26px; border-radius: 8px; }
+.cb[data-checked] { background: var(--good); border-color: var(--good); }
+.cb-ind { display: flex; } .cb-ind[data-unchecked] { display: none; }
+
+.switch-row { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); cursor: pointer; }
+.switch { position: relative; width: 44px; height: 26px; border-radius: 999px; border: 0; background: var(--line); padding: 0; cursor: pointer; flex: none; }
+.switch[data-checked] { background: var(--good); }
+.switch-thumb { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.15s ease; }
+.switch[data-checked] .switch-thumb { transform: translateX(18px); }
+
+.shop { margin-top: 18px; }
+.shop-h { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; margin: 0 0 4px; padding: 8px 12px; border-radius: 10px; }
+.shop-h.morrisons { background: var(--morrisons-bg); color: var(--morrisons); }
+.shop-h.lidl { background: var(--lidl-bg); color: var(--lidl); }
+.h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 14px 0 6px; }
+.item { display: grid; grid-template-columns: auto 52px 1fr auto; gap: 10px; align-items: center; background: var(--card);
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; margin-bottom: 8px; }
+.item.done { opacity: 0.5; } .item.done .item-name { text-decoration: line-through; }
+.thumb { width: 52px; height: 52px; border-radius: 10px; object-fit: contain; background: #fff; }
+.thumb.ph { display: grid; place-items: center; background: var(--line); font-size: 20px; }
+.item-main { display: grid; min-width: 0; }
+.item-name { font-weight: 600; font-size: 15px; }
+.item-sub { color: var(--muted); font-size: 13px; }
+.item-price { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.item-price .q { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
+.tag { font-size: 12px; color: var(--warn); font-weight: 600; }
+.tag.offer { color: var(--offer); }
+
+.cmp { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 8px; padding: 10px; }
+.cmp-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.cmp-t { font-weight: 600; text-transform: capitalize; min-width: 0; }
+.badge { flex: none; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
+.badge.lidl { background: var(--lidl-bg); color: var(--lidl); } .badge.morrisons { background: var(--morrisons-bg); color: var(--morrisons); }
+.cmp-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.side { display: grid; align-content: start; gap: 2px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.side.win { background: var(--good-bg); border-color: var(--good); }
+.side-st { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.side.morrisons .side-st { color: var(--morrisons); } .side.lidl .side-st { color: var(--lidl); }
+.side-pr { font-weight: 700; font-variant-numeric: tabular-nums; }
+.side-nm { font-size: 12px; color: var(--muted); }
+
+.backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.35); }
+.dialog { position: fixed; left: 50%; top: 40%; transform: translate(-50%, -50%); width: min(92vw, 380px); background: var(--card); color: var(--ink);
+  border-radius: 16px; padding: 18px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); }
+.dialog-t { margin: 0 0 4px; font-size: 17px; text-transform: none; }
+.dialog-d { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+
+.toasts { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(92vw, 380px); z-index: 20; }
+.toast { background: var(--ink); color: var(--bg); border-radius: 12px; padding: 10px 14px; margin-top: 8px; }
+.toast-title { font-weight: 600; font-size: 14px; }
+.toast-desc { font-size: 13px; opacity: 0.85; }

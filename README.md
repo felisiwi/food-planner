@@ -31,6 +31,20 @@ to paste into `prices/lidl.csv`, so they're kept in the repo and used on every b
 
 One item per line, `2 x` for quantities, `#` for comments. Specific terms match better.
 
+## The phone app (app/, React + Base UI)
+
+Plan meals, get the ingredients from Claude, tick what you have at home, and shop from a
+list split between the two shops. Built as one HTML file with the latest prices inside:
+
+```sh
+cd app && npm install && cd ..
+node build-app.mjs --vite   # writes app.html (and app.artifact.html for claude.ai)
+```
+
+When opened in Claude, the page asks Claude for ingredients and keeps your plan, pantry,
+ticks and added prices in its shared storage, so phone and laptop stay in sync. Ingredients
+with no Morrisons price yet are queued for the laptop to look up.
+
 ## Where prices come from
 
 | | Morrisons | Lidl |
