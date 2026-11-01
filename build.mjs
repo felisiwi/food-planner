@@ -5,7 +5,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { parseCsv } from './lib/list.mjs';
-import { rank } from './lib/match.mjs';
+import { rank, relevant } from './lib/match.mjs';
 
 const IN = process.argv[2] || 'data/results.json';
 const OUT = process.argv[3] || 'list.html';
@@ -30,10 +30,39 @@ for (const s of STORES) {
   }
 }
 
+// Prices you actually paid, from Lidl Plus receipts (node lidl-receipts.mjs).
+// Receipt names are often shortened ("Chop Tomatoes"), so a looser match is
+// allowed and flagged as "closest" on the page.
+const receiptBook = existsSync('data/lidl-receipt-prices.json')
+  ? Object.values(JSON.parse(await readFile('data/lidl-receipt-prices.json', 'utf8')).items || {})
+  : [];
+const stem = (w) => w.toLowerCase().replace(/[^a-z]/g, '');
+function fromReceipts(term) {
+  const words = term.split(/\s+/).map(stem).filter((w) => w.length >= 3);
+  return receiptBook
+    .map((r) => {
+      if (relevant(term, r.name)) return { r, match: true };
+      const have = r.name.split(/\s+/).map(stem);
+      const loose = words.length && words.every((w) => have.some((h) => h.length >= 3 && (w.startsWith(h) || h.startsWith(w))));
+      return loose ? { r, match: false } : null;
+    })
+    .filter(Boolean)
+    .map(({ r, match }) => ({
+      name: r.name + (r.perKg ? ' (per kg)' : ''),
+      price: r.price,
+      date: r.date,
+      source: 'receipt',
+      match,
+      category: [],
+      available: true,
+    }));
+}
+
 const rows = (db.list || []).map(({ qty, term }) => {
   const stores = {};
   for (const s of STORES) {
-    const online = rank(term, db.stores?.[s.id]?.[term]?.products || []);
+    const receipts = s.id === 'lidl' ? fromReceipts(term) : [];
+    const online = rank(term, [...receipts, ...(db.stores?.[s.id]?.[term]?.products || [])]);
     const m = manual[s.id][term];
     stores[s.id] = m ? [m, ...online] : online;
   }

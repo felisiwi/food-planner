@@ -4,3 +4,5 @@ data/results.json
 list.html
 .lidl-sample.html
 *.artifact.html
+data/lidl-receipts/
+data/lidl-receipt-prices.json

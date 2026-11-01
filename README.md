@@ -42,6 +42,30 @@ One item per line, `2 x` for quantities, `#` for comments. Specific terms match 
 Lidl search results include loosely related items ("milk" → milk frother), so a result only
 counts if every word of your term is in the product name and it's a food item.
 
+## Lidl prices from your receipts
+
+Lidl's website only lists part of its range, so the best Lidl prices are the ones on your
+Lidl Plus receipts. `lidl-receipts.mjs` reads them with the unofficial
+[ilidl](https://pypi.org/project/ilidl/) tool (Lidl UK only).
+
+One-time setup:
+
+```sh
+pip install ilidl              # needs Python 3.12+
+# log in at https://www.lidl.co.uk in Firefox or Chrome yourself, then:
+ilidl login --browser firefox  # or chrome
+ilidl doctor
+```
+
+Then, after any Lidl shop:
+
+```sh
+node lidl-receipts.mjs && node build.mjs
+```
+
+Receipts are personal, so they stay in `data/`, which git ignores. Receipt names are often
+shortened, so loose matches show "Check it's the right item" on the page.
+
 ## Being polite
 
 Both sites limit automated traffic. `fetch.mjs` stays well inside that: one request every
