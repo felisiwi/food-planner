@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Food Planner</title>
+<style>
+  :root {
+    --bg: #f6f4ef; --card: #fff; --ink: #1b1d1a; --muted: #6b6f68; --line: #e4e1d8;
+    --head: #1d2a24; --head-ink: #f3f1ea; --good: #0f7a4f; --good-bg: #e3f3ea; --offer: #b5121b; --warn: #8a5a00;
+    --morrisons: #00563f; --lidl: #0050aa;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111311; --card: #1b1e1b; --ink: #ecebe6; --muted: #9a9e95; --line: #2c302a;
+      --head: #0b0f0d; --good: #48c58f; --good-bg: #163326; --offer: #ff6b6b; --warn: #e0b04f;
+      --morrisons: #3fae84; --lidl: #5b9bff; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  button { font: inherit; color: inherit; }
+  header { background: var(--head); color: var(--head-ink); padding: calc(12px + env(safe-area-inset-top)) 16px 0; }
+  .meta { font-size: 12px; opacity: .7; }
+  .totals { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0 8px; }
+  .tot { border-radius: 12px; padding: 10px 12px; background: rgba(255,255,255,.07); border-top: 3px solid; }
+  .tot.morrisons { border-color: var(--morrisons); } .tot.lidl { border-color: var(--lidl); }
+  .tot .s { font-size: 13px; opacity: .85; }
+  .tot .n { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .tot .c { font-size: 12px; opacity: .7; }
+  .verdict { font-size: 14px; line-height: 1.4; padding: 2px 0 10px; }
+  .verdict b { color: #8fe0b7; }
+  nav { display: flex; gap: 4px; position: sticky; top: 0; z-index: 3; background: var(--head); color: var(--head-ink);
+    padding: env(safe-area-inset-top) 12px 0; }
+  nav button { flex: 1; background: none; border: 0; padding: 10px 4px 12px; font-size: 14px; opacity: .65;
+    border-bottom: 3px solid transparent; cursor: pointer; }
+  nav button.on { opacity: 1; font-weight: 600; border-color: var(--head-ink); }
+  .demo { background: var(--warn); color: #fff; font-size: 13px; padding: 8px 16px; }
+  main { padding: 6px 16px 40px; max-width: 680px; margin: 0 auto; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 20px 0 8px;
+    display: flex; justify-content: space-between; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 8px; }
+  /* compare rows */
+  .cmp .top { display: flex; justify-content: space-between; padding: 10px 12px 0; font-weight: 600; font-size: 15px; }
+  .cmp .top .q { color: var(--muted); font-weight: 400; font-size: 13px; }
+  .cmp .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px; }
+  .opt { border-radius: 10px; padding: 8px; display: grid; grid-template-columns: 44px 1fr; gap: 8px; align-items: start;
+    border: 1px solid var(--line); min-height: 64px; }
+  .opt.best { background: var(--good-bg); border-color: var(--good); }
+  .opt .st { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+  .opt.morrisons .st { color: var(--morrisons); } .opt.lidl .st { color: var(--lidl); }
+  .opt .nm { font-size: 12px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .opt .pr { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .opt .sv { font-size: 12px; color: var(--good); font-weight: 600; }
+  .opt img, .opt .ph { width: 44px; height: 44px; border-radius: 8px; object-fit: contain; background: #fff; }
+  .opt .ph { display: grid; place-items: center; background: var(--line); color: var(--muted); font-size: 18px; }
+  .opt.none { grid-template-columns: 1fr; align-content: center; }
+  .add { background: none; border: 1px dashed var(--muted); border-radius: 8px; padding: 6px 8px; font-size: 13px;
+    color: var(--muted); cursor: pointer; margin-top: 4px; }
+  .tag { font-size: 11px; color: var(--offer); font-weight: 600; }
+  .tag.you { color: var(--warn); }
+  /* shop rows */
+  .item { display: grid; grid-template-columns: 60px 1fr auto; gap: 12px; align-items: center; padding: 10px; cursor: pointer; }
+  .item img, .item .ph { width: 60px; height: 60px; border-radius: 10px; object-fit: contain; background: #fff; }
+  .item .ph { display: grid; place-items: center; background: var(--line); color: var(--muted); font-size: 22px; }
+  .name { font-weight: 600; font-size: 15px; }
+  .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .price { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .price .q { display: block; color: var(--muted); font-weight: 400; font-size: 12px; }
+  .swap { margin-top: 4px; font-size: 12px; color: var(--good); background: none; border: 0; padding: 0; cursor: pointer; }
+  .item.done { opacity: .5; } .item.done .name { text-decoration: line-through; }
+  .toggle { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); margin: 14px 0 0; }
+  footer { color: var(--muted); font-size: 12px; text-align: center; margin: 24px 16px 40px; line-height: 1.6; }
+  footer button { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; cursor: pointer; }
+</style>
+</head>
+<body>
+<header>
+  <div class="meta" id="meta"></div>
+  <div class="totals" id="totals"></div>
+  <div class="verdict" id="verdict"></div>
+</header>
+<nav id="tabs"></nav>
+<div class="demo" id="demo" hidden>Demo: Morrisons prices are real (Morrisons.com, 1 Nov). Lidl is empty until you fetch or add prices.</div>
+<main id="main"></main>
+<footer>
+  Prices compare pack prices, so check sizes where they differ.<br>
+  Morrisons: online prices. Lidl: website listings, your receipts and prices you add.<br><br>
+  <button id="export">Copy prices I added as CSV</button>
+</footer>
+<script>
+const DATA = {"rows":[{"qty":2,"term":"plant revolution meat free mince","stores":{"morrisons":[{"name":"Morrisons Plant Revolution Meat Free Mince","price":2,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Chilled","Meat Free"],"source":"online"},{"name":"Quorn Vegetarian Mince 630g","price":3.7,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Frozen","Meat Free"],"source":"online"},{"name":"Meatless Farm Beef Style Mince 350g","price":3,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Chilled","Meat Free"],"source":"online"}],"lidl":[]}},{"qty":1,"term":"lasagne sheets","stores":{"morrisons":[{"name":"Morrisons Lasagne Sheets 500g","price":0.75,"unitPrice":1.5,"unitLabel":"per kg","offer":null,"available":true,"image":null,"category":["Food Cupboard","Rice, Pasta & Pulses"],"source":"online"},{"name":"Barilla Lasagne Sheets 500g","price":1.75,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Food Cupboard","Rice, Pasta & Pulses"],"source":"online"}],"lidl":[]}},{"qty":3,"term":"chopped tomatoes","stores":{"morrisons":[{"name":"Morrisons Chopped Tomatoes (400g)","price":0.45,"unitPrice":1.13,"unitLabel":"per kg","offer":null,"available":true,"image":"https://groceries.morrisons.com/images-v3/4b85987b-1398-4173-a0c1-3546047c9d74/8294eb0f-d995-4fd2-87e3-c6f87a89cec2/300x300.jpg","category":["Food Cupboard","Tins, Cans & Packets"],"source":"online"},{"name":"Napolina Chopped Tomatoes in a Rich Tomato Juice (400g)","price":1,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Food Cupboard","Tins, Cans & Packets"],"source":"online"}],"lidl":[]}},{"qty":1,"term":"passata","stores":{"morrisons":[{"name":"Morrisons Passata (500g)","price":0.45,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Food Cupboard","Tins, Cans & Packets"],"source":"online"},{"name":"Napolina Tomato Passata 690g","price":1.5,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Food Cupboard","Tins, Cans & Packets"],"source":"online"}],"lidl":[]}},{"qty":1,"term":"brown onions","stores":{"morrisons":[{"name":"Morrisons Brown Onions 3 Pack","price":0.95,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Fruit & Veg","Vegetables"],"source":"online"},{"name":"Morrisons British Brown Onions 1kg","price":0.95,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Fruit & Veg","Vegetables"],"source":"online"}],"lidl":[]}},{"qty":1,"term":"garlic","stores":{"morrisons":[{"name":"Morrisons Garlic Bulbs 4 Pack","price":0.87,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Fruit & Veg","Vegetables"],"source":"online"},{"name":"Morrisons Organic Garlic 3 Pack","price":1,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Fruit & Veg","Vegetables"],"source":"online"}],"lidl":[]}},{"qty":1,"term":"carrots","stores":{"morrisons":[{"name":"Morrisons British Carrots 500g","price":0.44,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Fruit & Veg","Vegetables"],"source":"online"},{"name":"Morrisons British Carrots 1kg","price":0.69,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Fruit & Veg","Vegetables"],"source":"online"}],"lidl":[]}},{"qty":1,"term":"celery","stores":{"morrisons":[{"name":"Morrisons British Celery Sticks 250g","price":0.9,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Fruit & Veg","Vegetables"],"source":"online"},{"name":"Morrisons Celery","price":0.69,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Fruit & Veg","Vegetables"],"source":"online"}],"lidl":[]}},{"qty":1,"term":"tomato puree","stores":{"morrisons":[{"name":"Morrisons Tomato Puree (200g)","price":0.59,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Food Cupboard","Tins, Cans & Packets"],"source":"online"},{"name":"Napolina Double Concentrate Tomato Puree (142g)","price":1.2,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Food Cupboard","Tins, Cans & Packets"],"source":"online"}],"lidl":[]}},{"qty":1,"term":"vegetable stock cubes","stores":{"morrisons":[{"name":"Morrisons Vegetable Stock Cubes 12's","price":1.3,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Food Cupboard","Baking & Cooking"],"source":"online"},{"name":"Oxo Vegetable Stock 12 Cubes 71g","price":2.25,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Food Cupboard","Baking & Cooking"],"source":"online"}],"lidl":[]}},{"qty":1,"term":"butter","stores":{"morrisons":[{"name":"Morrisons British Salted Butter 250g","price":1.85,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Dairy, Eggs & Milk","Butter, Milk & Cheese"],"source":"online"}],"lidl":[]}},{"qty":1,"term":"plain flour","stores":{"morrisons":[{"name":"Morrisons Plain Flour 500g","price":0.53,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Food Cupboard","Baking & Cooking"],"source":"online"},{"name":"Morrisons Plain Flour 1.5kg","price":0.7,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Food Cupboard","Baking & Cooking"],"source":"online"}],"lidl":[]}},{"qty":1,"term":"whole milk","stores":{"morrisons":[{"name":"Morrisons British Whole Milk 2 Pint","price":1.2,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Dairy, Eggs & Milk","Butter, Milk & Cheese"],"source":"online"}],"lidl":[]}},{"qty":1,"term":"mature cheddar","stores":{"morrisons":[{"name":"Morrisons British Mature Cheddar 400g","price":2.95,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Dairy, Eggs & Milk","Butter, Milk & Cheese"],"source":"online"},{"name":"Cathedral City British Mature Cheddar Cheese 350g","price":3.75,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Dairy, Eggs & Milk","Butter, Milk & Cheese"],"source":"online"}],"lidl":[]}},{"qty":1,"term":"mozzarella","stores":{"morrisons":[{"name":"Morrisons Savers Mozzarella 125g","price":0.55,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Dairy, Eggs & Milk","Butter, Milk & Cheese"],"source":"online"},{"name":"Morrisons Mozzarella","price":1.3,"unitPrice":null,"unitLabel":"","offer":null,"available":true,"image":null,"category":["Dairy, Eggs & Milk","Butter, Milk & Cheese"],"source":"online"}],"lidl":[]}}],"stores":[{"id":"morrisons","label":"Morrisons","place":"Stamford Hill"},{"id":"lidl","label":"Lidl","place":"Amhurst Park"}],"updatedAt":1793544300000,"demo":true};
+const S = DATA.stores.map((s) => s.id);
+const LABEL = Object.fromEntries(DATA.stores.map((s) => [s.id, s.label]));
+const PLACE = Object.fromEntries(DATA.stores.map((s) => [s.id, s.place]));
+const LISTKEY = 'fp-' + DATA.rows.map((r) => r.term).join('|');
+let st = { tab: 'compare', split: true, pick: {}, done: {}, mine: {} };
+try { st = Object.assign(st, JSON.parse(localStorage.getItem(LISTKEY)) || {}); } catch (e) {}
+const save = () => { try { localStorage.setItem(LISTKEY, JSON.stringify(st)); } catch (e) {} };
+const gbp = (n) => '£' + n.toFixed(2);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+function options(i, s) {
+  const row = DATA.rows[i];
+  const mine = st.mine[s]?.[row.term];
+  const opts = row.stores[s] || [];
+  return mine ? [{ ...mine, source: 'you', category: [], available: true }, ...opts] : opts;
+}
+function chosen(i, s) {
+  const opts = options(i, s);
+  return opts.length ? opts[(st.pick[s]?.[i] || 0) % opts.length] : null;
+}
+const cost = (i, s) => { const o = chosen(i, s); return o ? o.price * DATA.rows[i].qty : null; };
+
+function summary() {
+  const t = Object.fromEntries(S.map((s) => [s, { sum: 0, n: 0 }]));
+  let both = 0, a = 0, b = 0, split = 0;
+  const assign = [];
+  DATA.rows.forEach((r, i) => {
+    const c = S.map((s) => cost(i, s));
+    S.forEach((s, k) => { if (c[k] != null) { t[s].sum += c[k]; t[s].n++; } });
+    if (c[0] != null && c[1] != null) { both++; a += c[0]; b += c[1]; }
+    const known = S.filter((s, k) => c[k] != null);
+    const best = known.sort((x, y) => cost(i, x) - cost(i, y))[0] || null;
+    assign[i] = best;
+    if (best) split += cost(i, best);
+  });
+  return { t, both, a, b, split, assign };
+}
+
+function header(sm) {
+  const n = DATA.rows.length;
+  document.getElementById('meta').textContent = 'Prices checked ' +
+    new Date(DATA.updatedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) + ' · ' + n + ' items';
+  document.getElementById('totals').innerHTML = S.map((s) =>
+    '<div class="tot ' + s + '"><div class="s">' + LABEL[s] + ' ' + esc(PLACE[s]) + '</div>' +
+    '<div class="n">' + gbp(sm.t[s].sum) + '</div>' +
+    '<div class="c">' + sm.t[s].n + ' of ' + n + ' items priced</div></div>').join('');
+  let v = '';
+  if (sm.both) {
+    const diff = sm.a - sm.b, cheaper = diff > 0 ? 'Lidl' : 'Morrisons';
+    v = 'Like for like (' + sm.both + ' items priced at both): Morrisons ' + gbp(sm.a) + ' vs Lidl ' + gbp(sm.b) +
+      (Math.abs(diff) < 0.005 ? ' — the same.' : ' → <b>' + cheaper + ' saves ' + gbp(Math.abs(diff)) + ' (' +
+      Math.round(Math.abs(diff) / Math.max(sm.a, sm.b) * 100) + '%)</b>.');
+    const atL = sm.assign.filter((x) => x === 'lidl').length, atM = sm.assign.filter((x) => x === 'morrisons').length;
+    v += '<br>Cheapest split: ' + gbp(sm.split) + ' (' + atM + ' at Morrisons, ' + atL + ' at Lidl).';
+  } else {
+    v = 'No item is priced at both shops yet. Add Lidl prices in Compare to see savings.';
+  }
+  document.getElementById('verdict').innerHTML = v;
+  const tabs = [['compare', 'Compare'], ...S.map((s) => [s, 'Shop ' + LABEL[s]])];
+  document.getElementById('tabs').innerHTML = tabs.map(([k, l]) =>
+    '<button data-tab="' + k + '" class="' + (st.tab === k ? 'on' : '') + '">' + l + '</button>').join('');
+  document.getElementById('demo').hidden = !DATA.demo;
+}
+
+function thumb(o) { return o && o.image ? '<img loading="lazy" alt="" src="' + esc(o.image) + '">' : '<div class="ph">🛒</div>'; }
+function tagFor(o) {
+  if (o.source === 'you') return '<div class="tag you">Added by you</div>';
+  if (o.source === 'manual') return '<div class="tag you">From your price list' + (o.date ? ', ' + esc(o.date) : '') + '</div>';
+  return o.offer ? '<div class="tag">' + esc(o.offer) + '</div>' : '';
+}
+
+function compareView(sm) {
+  return DATA.rows.map((r, i) => {
+    const c = S.map((s) => cost(i, s));
+    const bothKnown = c.every((x) => x != null);
+    const cols = S.map((s, k) => {
+      const o = chosen(i, s);
+      if (!o) return '<div class="opt ' + s + ' none"><div class="st">' + LABEL[s] + '</div>' +
+        '<div class="nm">Not listed online</div><button class="add" data-add="' + i + '" data-store="' + s + '">+ Add price</button></div>';
+      const best = bothKnown && c[k] < c[1 - k] - 0.004;
+      const opts = options(i, s);
+      return '<div class="opt ' + s + (best ? ' best' : '') + '">' + thumb(o) + '<div>' +
+        '<div class="st">' + LABEL[s] + '</div><div class="pr">' + gbp(c[k]) + '</div>' +
+        '<div class="nm">' + esc(o.name) + '</div>' + tagFor(o) +
+        (best ? '<div class="sv">saves ' + gbp(c[1 - k] - c[k]) + '</div>' : '') +
+        (opts.length > 1 ? '<button class="swap" data-swap="' + i + '" data-store="' + s + '">Swap ' +
+          (((st.pick[s]?.[i] || 0) % opts.length) + 1) + '/' + opts.length + '</button>' : '') +
+        (s !== 'morrisons' ? ' <button class="swap" data-add="' + i + '" data-store="' + s + '">Edit</button>' : '') +
+        '</div></div>';
+    }).join('');
+    return '<div class="card cmp"><div class="top"><span>' + esc(r.term) + '</span><span class="q">' +
+      (r.qty > 1 ? r.qty + ' ×' : '') + '</span></div><div class="cols">' + cols + '</div></div>';
+  }).join('');
+}
+
+function shopView(s, sm) {
+  const groups = {};
+  DATA.rows.forEach((r, i) => {
+    if (st.split && sm.assign[i] && sm.assign[i] !== s) return;
+    const o = chosen(i, s);
+    const g = o ? ((o.category || []).slice(0, 2).join(' › ') || 'Other') : 'Not priced here';
+    (groups[g] ||= []).push({ r, i, o });
+  });
+  let html = '<label class="toggle"><input type="checkbox" id="split"' + (st.split ? ' checked' : '') +
+    '> Only items that are cheaper here</label>';
+  Object.keys(groups).sort((a, b) => (a === 'Not priced here') - (b === 'Not priced here') || a.localeCompare(b)).forEach((g) => {
+    html += '<h2><span>' + esc(g) + '</span><span>' + groups[g].length + '</span></h2>';
+    groups[g].forEach(({ r, i, o }) => {
+      const done = st.done[s]?.[i];
+      html += '<div class="card item' + (done ? ' done' : '') + '" data-tick="' + i + '" data-store="' + s + '">' + thumb(o) +
+        '<div><div class="name">' + esc(o ? o.name : r.term) + '</div><div class="sub">for "' + esc(r.term) + '"' +
+        (o && o.unitPrice ? ' · ' + gbp(o.unitPrice) + ' ' + esc(o.unitLabel) : '') + '</div>' + (o ? tagFor(o) : '') +
+        (o && o.available === false ? '<div class="tag">Unavailable online, check shelf</div>' : '') + '</div>' +
+        '<div class="price">' + (o ? gbp(o.price * r.qty) + (r.qty > 1 ? '<span class="q">' + r.qty + ' × ' + gbp(o.price) + '</span>' : '') : '–') +
+        '</div></div>';
+    });
+  });
+  return html;
+}
+
+function render() {
+  const sm = summary();
+  header(sm);
+  document.getElementById('main').innerHTML = st.tab === 'compare' ? compareView(sm) : shopView(st.tab, sm);
+}
+
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-tab],[data-swap],[data-add],[data-tick],#export');
+  if (!t) return;
+  if (t.dataset.tab) { st.tab = t.dataset.tab; window.scrollTo(0, 0); }
+  else if (t.dataset.swap) { const s = t.dataset.store, i = +t.dataset.swap; (st.pick[s] ||= {})[i] = ((st.pick[s][i] || 0) + 1); }
+  else if (t.dataset.add) {
+    const s = t.dataset.store, r = DATA.rows[+t.dataset.add];
+    const cur = st.mine[s]?.[r.term];
+    const p = prompt(LABEL[s] + ' price for "' + r.term + '" (one pack, £). Leave empty to remove.', cur ? cur.price.toFixed(2) : '');
+    if (p === null) return;
+    const price = parseFloat(String(p).replace(/[£\s]/g, ''));
+    st.mine[s] ||= {};
+    if (!p.trim() || !(price > 0)) delete st.mine[s][r.term];
+    else st.mine[s][r.term] = { name: (cur && cur.name) || r.term, price, date: new Date().toISOString().slice(0, 10) };
+    if (st.pick[s]) st.pick[s][+t.dataset.add] = 0;
+  }
+  else if (t.dataset.tick) { const s = t.dataset.store, i = +t.dataset.tick; (st.done[s] ||= {})[i] = !st.done[s]?.[i]; }
+  else if (t.id === 'export') {
+    const lines = [];
+    for (const s of Object.keys(st.mine)) for (const [term, m] of Object.entries(st.mine[s]))
+      lines.push(s + ': ' + term + ',' + m.name + ',' + m.price.toFixed(2) + ',' + m.date);
+    const txt = lines.length ? lines.join('\n') : '';
+    if (!txt) { alert('No prices added yet.'); return; }
+    navigator.clipboard?.writeText(txt).then(() => alert('Copied. Paste each line (without the "store: " part) into prices/<store>.csv.'),
+      () => prompt('Copy these lines:', txt));
+  }
+  save(); render();
+});
+document.addEventListener('change', (e) => { if (e.target.id === 'split') { st.split = e.target.checked; save(); render(); } });
+render();
+</script>
+</body>
+</html>

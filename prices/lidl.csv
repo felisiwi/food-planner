@@ -1,0 +1,4 @@
+term,name,price,date
+# Add Lidl prices here for items Lidl doesn't list online, e.g. from a receipt or shelf label.
+# "term" must match the line in list.txt exactly (without the "2 x").
+# Format example (made-up price): chopped tomatoes,Chopped Tomatoes 400g,1.23,2026-11-01

@@ -1,0 +1,13 @@
+{
+  "name": "food-planner",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Priced shopping list with photos and a Morrisons vs Lidl comparison",
+  "scripts": {
+    "fetch": "node fetch.mjs",
+    "build": "node build.mjs",
+    "demo": "node build.mjs data/demo.json demo.html"
+  },
+  "engines": { "node": ">=18" }
+}
