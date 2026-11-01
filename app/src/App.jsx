@@ -2,8 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Tabs } from '@base-ui/react/tabs';
 import { Checkbox } from '@base-ui/react/checkbox';
 import { Switch } from '@base-ui/react/switch';
-import { ToggleGroup } from '@base-ui/react/toggle-group';
-import { Toggle } from '@base-ui/react/toggle';
+import { Drawer } from '@base-ui/react/drawer';
 import { Dialog } from '@base-ui/react/dialog';
 import { Toast } from '@base-ui/react/toast';
 import { DATA, morrisonsFor, lidlFor, gbp, perUnit, unitText, orderOptions, choosePack, sizeText, needAmount, probablyHave } from './data.js';
@@ -90,14 +89,22 @@ function Planner({ db, sample }) {
         };
         // sel = the pack(s) picked at each shop: which product, how many, what it costs, whether it's oversized.
         const sel = Object.fromEntries(STORES.map((s) => [s.id, choosePack(opts[s.id], it, picks[s.id]?.[k], legacyUnit)]));
+        // The three labelled alternatives shown in the options sheet and the "bigger pack" suggestion.
+        const alts = Object.fromEntries(STORES.map((s) => [s.id, opts[s.id].length ? {
+          best: choosePack(opts[s.id], it, { mode: 'similar' }),
+          unit: choosePack(opts[s.id], it, { mode: 'unit' }),
+          pack: choosePack(opts[s.id], it, { mode: 'pack' }),
+        } : null]));
         const chosen = Object.fromEntries(STORES.map((s) => [s.id, sel[s.id]?.opt ?? null]));
         const cost = Object.fromEntries(STORES.map((s) => [s.id, sel[s.id] ? sel[s.id].cost : null]));
         const unit = Object.fromEntries(STORES.map((s) => [s.id, perUnit(chosen[s.id])]));
         // Compare per kg/l when both shops give the same unit, otherwise per pack.
-        const sameUnit = unit.morrisons && unit.lidl && unit.morrisons.u === unit.lidl.u;
+        // An oversized pick is judged by what you'd actually pay, so a cheap-per-kg giant bag doesn't win the split.
+        const oversized = STORES.some((s) => sel[s.id]?.big);
+        const sameUnit = !oversized && unit.morrisons && unit.lidl && unit.morrisons.u === unit.lidl.u;
         const value = (id) => (sameUnit ? unit[id].v : cost[id]);
         const known = STORES.filter((s) => cost[s.id] != null).sort((a, b) => value(a.id) - value(b.id));
-        return { it, k, opts, sel, chosen, cost, unit, have: probablyHave(it), basis: sameUnit ? 'per ' + unit.lidl.u : 'per pack', value, best: known[0]?.id || null };
+        return { it, k, opts, sel, alts, chosen, cost, unit, have: probablyHave(it), basis: sameUnit ? 'per ' + unit.lidl.u : oversized ? 'for what you’d pay' : 'per pack', value, best: known[0]?.id || null };
       }),
     [needed, mine, picks, legacyUnit],
   );
@@ -342,39 +349,6 @@ function PackLine({ sel }) {
   );
 }
 
-const MODES = [
-  { id: 'similar', label: 'Similar size' },
-  { id: 'unit', label: 'Cheapest per' },
-  { id: 'pack', label: 'Cheapest pack' },
-];
-const unitWord = (sel) => ({ kg: 'kg', l: 'litre', each: 'item' })[sel?.need?.u || perUnit(sel?.opt)?.u] || 'kg';
-
-// Three one-tap choices (Base UI ToggleGroup). `value` is null when the pick was stepped to by hand.
-function ModeToggle({ value, word, onChange, label }) {
-  return (
-    <ToggleGroup className="seg" value={value ? [value] : []} onValueChange={(v) => v[0] && onChange(v[0])} aria-label={label}>
-      {MODES.map((m) => (
-        <Toggle key={m.id} value={m.id} className="seg-b">{m.id === 'unit' ? `${m.label} ${word}` : m.label}</Toggle>
-      ))}
-    </ToggleGroup>
-  );
-}
-
-// ‹ 3 of 9 ›: step through every option this shop has.
-function Stepper({ sel, onPick, what }) {
-  const n = sel.order.length;
-  if (n < 2) return null;
-  const at = sel.order.indexOf(sel.opt);
-  const go = (d) => onPick({ mode: 'manual', name: sel.order[(at + d + n) % n].name });
-  return (
-    <div className="step">
-      <button className="step-b" onClick={() => go(-1)} aria-label={`Previous option for ${what}`}>‹</button>
-      <span className="step-n" aria-live="polite">{at + 1} of {n}</span>
-      <button className="step-b" onClick={() => go(1)} aria-label={`Next option for ${what}`}>›</button>
-    </div>
-  );
-}
-
 // Loud, on purpose: you're about to buy several times what the recipe needs.
 function BigPack({ sel, onPick }) {
   if (!sel?.big) return null;
@@ -397,12 +371,94 @@ function BigPack({ sel, onPick }) {
           <span>No smaller pack listed here.</span>
         )}
       </div>
-      {a && <button className="warn-b" onClick={() => onPick({ mode: 'similar' })}>Use it</button>}
+      {a && <button className="warn-b" onClick={() => onPick({ mode: 'similar' })}>Use best fit</button>}
     </div>
   );
 }
 
-// Shop list: warning, then the three choices, then the stepper.
+// "Bigger pack: 1.5kg £0.70 · 56% less per kg · 3× what you need  [Switch]"
+// Shown only when a pack at least 10% cheaper per kg exists than the one picked.
+function Suggestion({ sel, alts, onPick }) {
+  const u = alts?.unit;
+  if (!sel || !u || u.opt.name === sel.opt.name) return null;
+  const a = perUnit(u.opt), b = perUnit(sel.opt);
+  if (!a || !b || a.u !== b.u || a.v > b.v * 0.9) return null;
+  const pct = Math.round((1 - a.v / b.v) * 100);
+  return (
+    <div className="deal">
+      <span>
+        <b>Bigger pack:</b> {packSizeText(u)} {gbp(u.cost)} · {pct}% less per {a.u === 'l' ? 'litre' : a.u}
+        {u.big ? <> · <span className="deal-big">{ratioText(u.ratio)} what you need</span></> : null}
+      </span>
+      <button className="deal-b" onClick={() => onPick({ mode: 'manual', name: u.opt.name })}>Switch</button>
+    </div>
+  );
+}
+
+// Every option at one shop, labelled, in a sheet that slides up (Base UI Drawer). Tap one to choose it.
+function OptionsSheet({ sel, alts, it, what, onPick }) {
+  const [open, setOpen] = useState(false);
+  if (!sel || sel.order.length < 2) return null;
+  const labels = (o) => [
+    alts?.best?.opt.name === o.name && 'Best fit',
+    alts?.unit?.opt.name === o.name && 'Cheapest per kg',
+    alts?.pack?.opt.name === o.name && 'Cheapest pack',
+  ].filter(Boolean);
+  const choose = (o) => {
+    onPick(alts?.best?.opt.name === o.name ? { mode: 'similar' } : { mode: 'manual', name: o.name });
+    setOpen(false);
+  };
+  const rows = [...sel.order]
+    .map((o) => ({ o, d: choosePack([o], it, { mode: 'similar' }), tags: labels(o) }))
+    .sort((x, y) => (y.tags.length > 0) - (x.tags.length > 0) || (x.d?.cost ?? x.o.price) - (y.d?.cost ?? y.o.price));
+  return (
+    <Drawer.Root open={open} onOpenChange={setOpen}>
+      <Drawer.Trigger className="link">See {sel.order.length} options</Drawer.Trigger>
+      <Drawer.Portal>
+        <Drawer.Backdrop className="backdrop" />
+        <Drawer.Viewport className="sheet-vp">
+          <Drawer.Popup className="sheet">
+            <div className="sheet-handle" aria-hidden="true" />
+            <Drawer.Title className="sheet-t">{what}</Drawer.Title>
+            <Drawer.Description className="sheet-d">
+              {sel.need ? `You need about ${sizeText({ qty: sel.need.qty, u: sel.need.u })}. ` : ''}Tap one to choose it.
+            </Drawer.Description>
+            <ul className="opts">
+              {rows.map(({ o, d, tags }) => {
+                const u = perUnit(o);
+                const on = o.name === sel.opt.name;
+                return (
+                  <li key={o.name}>
+                    <button className={'opt' + (on ? ' on' : '')} onClick={() => choose(o)} aria-pressed={on}>
+                      <Thumb src={o.image} />
+                      <span className="opt-main">
+                        <span className="opt-name">{o.name}</span>
+                        <span className="opt-sub">
+                          {d ? packSizeText(d) : ''}{u ? ` · ${unitText(u)}` : ''}
+                          {d?.big ? <span className="deal-big"> · {ratioText(d.ratio)} what you need</span> : null}
+                        </span>
+                        {(tags.length > 0 || on) && (
+                          <span className="opt-tags">
+                            {tags.map((l) => <span key={l} className="opt-tag">{l}</span>)}
+                            {on && <span className="opt-tag on">Chosen</span>}
+                          </span>
+                        )}
+                      </span>
+                      <span className="opt-pr">{gbp(d ? d.cost : o.price)}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <Drawer.Close className="btn sheet-close">Done</Drawer.Close>
+          </Drawer.Popup>
+        </Drawer.Viewport>
+      </Drawer.Portal>
+    </Drawer.Root>
+  );
+}
+
+// Under each item: the oversized warning if any, a cheaper-bigger-pack suggestion, and "See options".
 function PickPanel({ r, sid, onPick }) {
   const sel = r.sel[sid];
   if (!sel) return null;
@@ -410,12 +466,8 @@ function PickPanel({ r, sid, onPick }) {
   return (
     <div className="item-pick">
       <BigPack sel={sel} onPick={onPick} />
-      {sel.order.length > 1 && (
-        <div className="pick-row">
-          <ModeToggle value={sel.mode === 'manual' ? null : sel.mode} word={unitWord(sel)} onChange={(m) => onPick({ mode: m })} label={`Pack choice for ${what}`} />
-          <Stepper sel={sel} onPick={onPick} what={what} />
-        </div>
-      )}
+      {!sel.big && <Suggestion sel={sel} alts={r.alts[sid]} onPick={onPick} />}
+      <OptionsSheet sel={sel} alts={r.alts[sid]} it={r.it} what={what} onPick={onPick} />
     </div>
   );
 }
@@ -478,18 +530,12 @@ function CompareRow({ r, onPrice, onPick }) {
   const vm = both ? r.value('morrisons') : null, vl = both ? r.value('lidl') : null;
   const winner = both ? (vl < vm * 0.98 ? 'lidl' : vm < vl * 0.98 ? 'morrisons' : null) : null; // within 2% counts as the same
   const pct = winner ? Math.round((Math.abs(vm - vl) / Math.max(vm, vl)) * 100) : 0;
-  // One toggle for the whole row sets both shops; it shows a choice only when both shops agree.
-  const sels = STORES.map((s) => r.sel[s.id]).filter(Boolean);
-  const shared = sels.length && sels.every((x) => x.mode === sels[0].mode && x.mode !== 'manual') ? sels[0].mode : null;
   return (
     <div className="cmp">
       <div className="cmp-top">
         <span className="cmp-t">{r.it.item}</span>
         {winner && <span className={'badge ' + winner}>{winner === 'lidl' ? 'Lidl' : 'Morrisons'} {pct}% cheaper {r.basis}</span>}
       </div>
-      {sels.some((x) => x.order.length > 1) && (
-        <ModeToggle value={shared} word={unitWord(sels[0])} onChange={(mode) => onPick('both', { mode })} label={`Pack choice for ${r.it.item} at both shops`} />
-      )}
       <div className="cmp-cols">
         {STORES.map((s) => {
           const o = r.chosen[s.id];
@@ -504,8 +550,8 @@ function CompareRow({ r, onPrice, onPick }) {
                   <span className="side-pack">{packSizeText(sel)}{sel.count > 1 ? ` · ${gbp(o.price)} each` : ''}</span>
                   <span className="side-nm">{o.name}</span>
                   <Tag o={o} />
-                  <Stepper sel={sel} onPick={(v) => onPick(s.id, v)} what={`${r.it.item} at ${s.label}`} />
                   <BigPack sel={sel} onPick={(v) => onPick(s.id, v)} />
+                  <OptionsSheet sel={sel} alts={r.alts[s.id]} it={r.it} what={`${r.it.item} at ${s.label}`} onPick={(v) => onPick(s.id, v)} />
                 </>
               ) : (
                 <span className="side-nm">Not listed online</span>
