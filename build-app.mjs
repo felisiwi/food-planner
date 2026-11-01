@@ -8,6 +8,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { parseList } from './lib/list.mjs';
+import { fixUnit } from './lib/morrisons.mjs';
 
 const read = async (f, fallback) => (existsSync(f) ? JSON.parse(await readFile(f, 'utf8')) : fallback);
 
@@ -21,8 +22,8 @@ const receipts = await read('data/lidl-receipt-prices.json', { items: {} });
 
 // Morrisons: every search we've done, keyed by search term.
 const morrisons = {};
-for (const [term, v] of Object.entries(compare)) if (v.products?.length) morrisons[term.toLowerCase()] = v.products;
-for (const [term, v] of Object.entries(results.stores?.morrisons || {})) if (v.products?.length) morrisons[term.toLowerCase()] = v.products;
+for (const [term, v] of Object.entries(compare)) if (v.products?.length) morrisons[term.toLowerCase()] = v.products.map(fixUnit);
+for (const [term, v] of Object.entries(results.stores?.morrisons || {})) if (v.products?.length) morrisons[term.toLowerCase()] = v.products.map(fixUnit);
 
 // Lidl: the whole online range (food only) and receipt prices.
 const lidl = (results.ranges?.lidl?.products || []).filter((p) => p.isFood && p.price > 0);

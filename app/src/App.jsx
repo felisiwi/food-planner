@@ -4,7 +4,7 @@ import { Checkbox } from '@base-ui/react/checkbox';
 import { Switch } from '@base-ui/react/switch';
 import { Dialog } from '@base-ui/react/dialog';
 import { Toast } from '@base-ui/react/toast';
-import { DATA, morrisonsFor, lidlFor, gbp } from './data.js';
+import { DATA, morrisonsFor, lidlFor, gbp, perUnit, unitText, orderOptions } from './data.js';
 import { useCapability, useDoc, ingredientsFor, sampleErrorText } from './claude.js';
 
 const STORES = [
@@ -67,6 +67,7 @@ function Planner({ db, sample }) {
   const [queue, setQueue] = useDoc(db || null, 'queue', []);
   const [tab, setTab] = useState('plan');
   const [split, setSplit] = useState(true);
+  const [byUnit, setByUnit] = useState(() => { try { return localStorage.getItem('fp-byunit') === '1'; } catch { return false; } });
 
   const items = plan.items || DATA.example || [];
   const isExample = !plan.items;
@@ -78,12 +79,13 @@ function Planner({ db, sample }) {
     () =>
       needed.map((it) => {
         const k = key(it.item);
+        const mode = byUnit ? 'unit' : 'pack';
         const opts = {
-          morrisons: morrisonsFor(k),
-          lidl: [
+          morrisons: orderOptions(morrisonsFor(k), mode),
+          lidl: orderOptions([
             ...(mine.lidl?.[k] ? [{ name: it.item, price: mine.lidl[k].price, date: mine.lidl[k].date, source: 'you', match: true, category: [] }] : []),
             ...lidlFor(k),
-          ],
+          ], mode),
         };
         const chosen = {};
         for (const s of STORES) {
@@ -91,10 +93,14 @@ function Planner({ db, sample }) {
           chosen[s.id] = o.length ? o[(picks[s.id]?.[k] || 0) % o.length] : null;
         }
         const cost = Object.fromEntries(STORES.map((s) => [s.id, chosen[s.id] ? chosen[s.id].price * packs(it) : null]));
-        const known = STORES.filter((s) => cost[s.id] != null).sort((a, b) => cost[a.id] - cost[b.id]);
-        return { it, k, opts, chosen, cost, best: known[0]?.id || null };
+        const unit = Object.fromEntries(STORES.map((s) => [s.id, perUnit(chosen[s.id])]));
+        // Compare per kg/l when both shops give the same unit, otherwise per pack.
+        const sameUnit = unit.morrisons && unit.lidl && unit.morrisons.u === unit.lidl.u;
+        const value = (id) => (sameUnit ? unit[id].v : cost[id]);
+        const known = STORES.filter((s) => cost[s.id] != null).sort((a, b) => value(a.id) - value(b.id));
+        return { it, k, opts, chosen, cost, unit, basis: sameUnit ? 'per ' + unit.lidl.u : 'per pack', value, best: known[0]?.id || null };
       }),
-    [needed, mine, picks],
+    [needed, mine, picks, byUnit],
   );
 
   // Ingredients with no Morrisons price yet go on the laptop's to-do list.
@@ -162,6 +168,12 @@ function Planner({ db, sample }) {
             </Switch.Root>
             Split between shops, cheapest first
           </label>
+          <label className="switch-row">
+            <Switch.Root className="switch" checked={byUnit} onCheckedChange={(v) => { setByUnit(v); try { localStorage.setItem('fp-byunit', v ? '1' : '0'); } catch {} }}>
+              <Switch.Thumb className="switch-thumb" />
+            </Switch.Root>
+            Pick by price per kg or litre (bigger packs often win)
+          </label>
           {STORES.map((s) => {
             const mineRows = rows.filter((r) => (split ? r.best === s.id || (!r.best && s.id === 'morrisons') : true));
             return (
@@ -189,7 +201,7 @@ function Planner({ db, sample }) {
               }}
             />
           ))}
-          <p className="note">Prices compare one pack each (tins times the number needed), so check sizes where they differ.</p>
+          <p className="note">Cheaper is judged per kg or litre when both shops show it, otherwise per pack, so check sizes then.</p>
         </Tabs.Panel>
       </Tabs.Root>
     </>
@@ -353,6 +365,7 @@ function ShopList({ store, rows, ticks, onTick, onSwap }) {
                 <div className="item-price">
                   {r.cost[store.id] != null ? gbp(r.cost[store.id]) : '–'}
                   {packs(r.it) > 1 && o && <span className="q">{packs(r.it)} × {gbp(o.price)}</span>}
+                  {r.unit[store.id] && <span className="q">{unitText(r.unit[store.id])}</span>}
                 </div>
               </div>
             );
@@ -365,12 +378,15 @@ function ShopList({ store, rows, ticks, onTick, onSwap }) {
 
 function CompareRow({ r, onPrice }) {
   const m = r.cost.morrisons, l = r.cost.lidl;
-  const winner = m != null && l != null ? (l < m - 0.004 ? 'lidl' : m < l - 0.004 ? 'morrisons' : null) : null;
+  const both = m != null && l != null;
+  const vm = both ? r.value('morrisons') : null, vl = both ? r.value('lidl') : null;
+  const winner = both ? (vl < vm * 0.98 ? 'lidl' : vm < vl * 0.98 ? 'morrisons' : null) : null; // within 2% counts as the same
+  const pct = winner ? Math.round((Math.abs(vm - vl) / Math.max(vm, vl)) * 100) : 0;
   return (
     <div className="cmp">
       <div className="cmp-top">
         <span className="cmp-t">{r.it.item}</span>
-        {winner && <span className={'badge ' + winner}>{winner === 'lidl' ? 'Lidl' : 'Morrisons'} saves {gbp(Math.abs(m - l))}</span>}
+        {winner && <span className={'badge ' + winner}>{winner === 'lidl' ? 'Lidl' : 'Morrisons'} {pct}% cheaper {r.basis}</span>}
       </div>
       <div className="cmp-cols">
         {STORES.map((s) => {
@@ -381,6 +397,7 @@ function CompareRow({ r, onPrice }) {
               {o ? (
                 <>
                   <span className="side-pr">{gbp(r.cost[s.id])}</span>
+                  {r.unit[s.id] && <span className="side-u">{unitText(r.unit[s.id])}</span>}
                   <span className="side-nm">{o.name}</span>
                   <Tag o={o} />
                 </>

@@ -123,6 +123,8 @@ button { font: inherit; color: inherit; }
 .side.morrisons .side-st { color: var(--morrisons); } .side.lidl .side-st { color: var(--lidl); }
 .side-pr { font-weight: 700; font-variant-numeric: tabular-nums; }
 .side-nm { font-size: 12px; color: var(--muted); }
+.side-u { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.switch-row + .switch-row { margin-top: 10px; }
 
 .backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.35); }
 .dialog { position: fixed; left: 50%; top: 40%; transform: translate(-50%, -50%); width: min(92vw, 380px); background: var(--card); color: var(--ink);

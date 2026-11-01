@@ -108,7 +108,7 @@ search: for (const term of terms.slice(0, LIMIT)) {
 const pairs = [];
 for (const l of lidl) {
   const term = plainTerm(l.name);
-  const cands = (cache[term]?.products || []).filter((m) => relevant(term, m.name));
+  const cands = (cache[term]?.products || []).map(morrisons.fixUnit).filter((m) => relevant(term, m.name));
   if (!cands.length) continue;
   const lu = perUnit(l);
   const sameUnit = lu ? cands.filter((m) => perUnit(m)?.u === lu.u) : [];
