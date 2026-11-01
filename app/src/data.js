@@ -274,3 +274,49 @@ export function choosePack(allOpts, it, pick, legacyUnit = false) {
   }
   return { ...out, mode, alt, need, order: orderOptions(opts, 'pack') };
 }
+
+
+// ---- What a meal costs per portion ----
+
+// How much of an item one meal uses, in the item's own unit.
+export function shareFor(it, dish, dishCount) {
+  const a = Number(it.amount) || 0;
+  if (!a) return 0;
+  const name = dish.toLowerCase();
+  if (it.perMeal && it.perMeal[name] > 0) return it.perMeal[name];
+  const meals = (it.meals || []).map((m) => m.toLowerCase());
+  if (!meals.length) return dishCount === 1 ? a : 0;
+  if (!meals.includes(name)) return dishCount === 1 ? a : 0;
+  return a / meals.length;
+}
+
+const SPOON = { tsp: 0.005, tbsp: 0.015 }; // kg or litres, near enough for oil, spices and purée
+
+// The cost of the amount a meal actually uses (not the whole pack), from the
+// option's price per kg/litre/each. Falls back to the packs' price when the
+// units can't be lined up. Returns { cost, approx } or null.
+export function usedCost(opt, sel, it, qty) {
+  if (!opt || !(qty > 0)) return null;
+  const u = perUnit(opt);
+  const spoon = SPOON[it.unit];
+  const need = spoon ? { qty: qty * spoon, u: u?.u === 'l' ? 'l' : 'kg' } : needAmount({ ...it, amount: qty });
+  if (u && need && (u.u === need.u || u.u === need.alt)) return { cost: u.v * need.qty, approx: false };
+  // Same unit via the pack size: share of the pack(s).
+  const size = sel?.size || packSize(opt);
+  if (size && need && size.u === need.u && size.qty > 0) return { cost: (opt.price * need.qty) / size.qty, approx: false };
+  return sel ? { cost: sel.cost * Math.min(1, qty / (Number(it.amount) || qty)), approx: true } : null;
+}
+
+// Meal names and servings for a plan. Newer plans say so; older ones are read
+// from the item lists and "for 8" in the text you typed.
+export function dishesFor(plan, items) {
+  if (plan?.dishes?.length) return plan.dishes;
+  const names = [...new Set(items.flatMap((i) => (i.meals || []).map((m) => m.toLowerCase())))];
+  const text = String(plan?.meals || '').toLowerCase();
+  const servingsIn = (name) => {
+    const near = text.match(new RegExp(name.split(/\s+/).pop().replace(/[^a-z]/g, '') + '[^,\\n]*?\\bfor\\s+(\\d+)'));
+    return near ? Number(near[1]) : null;
+  };
+  if (!names.length) return text ? [{ name: 'your meals', servings: Number(text.match(/\bfor\s+(\d+)/)?.[1]) || null }] : [];
+  return names.map((name) => ({ name, servings: servingsIn(name) || (names.length === 1 ? Number(text.match(/\bfor\s+(\d+)/)?.[1]) || null : null) }));
+}

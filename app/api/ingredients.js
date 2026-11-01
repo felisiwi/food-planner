@@ -1,7 +1,7 @@
 // Meals -> ingredients for the website, using the Anthropic API.
 // Only active when ANTHROPIC_API_KEY is set on Vercel; otherwise answers 501 and
 // the app queues the request for the Mac instead. Requires the household key.
-import { ingredientsPrompt, cleanIngredients } from '../../lib/ingredients.mjs';
+import { ingredientsPrompt, cleanPlan } from '../../lib/ingredients.mjs';
 
 const SUPABASE_URL = 'https://lkvedgtzgxiykcqemqkk.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_naUK87EG4MbaLgl-Io6YbA_Yf7a3Wgy';
@@ -33,7 +33,7 @@ export default async function handler(req, res) {
   if (!r.ok) return res.status(502).json({ error: 'model error ' + r.status });
   const body = await r.json();
   try {
-    res.status(200).json(cleanIngredients(body.content?.map((c) => c.text || '').join('') || ''));
+    res.status(200).json(cleanPlan(body.content?.map((c) => c.text || '').join('') || ''));
   } catch {
     res.status(502).json({ error: 'invalid answer' });
   }

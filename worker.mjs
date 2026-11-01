@@ -7,7 +7,7 @@
 
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { ingredientsPrompt, cleanIngredients } from './lib/ingredients.mjs';
+import { ingredientsPrompt, cleanPlan } from './lib/ingredients.mjs';
 
 const env = Object.fromEntries(
   readFileSync(new URL('./.fp-env', import.meta.url), 'utf8')
@@ -36,9 +36,9 @@ for (const { id, meals } of jobs || []) {
   });
   try {
     if (r.status !== 0) throw new Error((r.stderr || r.error?.message || 'claude failed').slice(0, 300));
-    const items = cleanIngredients(r.stdout);
-    await rpc('fp_finish', { rid: id, result: items, err: null });
-    log(`request ${id}: ${items.length} ingredients`);
+    const plan = cleanPlan(r.stdout);
+    await rpc('fp_finish', { rid: id, result: plan, err: null });
+    log(`request ${id}: ${plan.items.length} ingredients, ${plan.dishes.length} meals`);
     done++;
   } catch (e) {
     const msg = e?.message || e?.code || String(e);

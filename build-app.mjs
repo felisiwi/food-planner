@@ -69,6 +69,7 @@ const data = {
   aldiNoPrice: aldiLookups.unpriced || {},
   receipts: Object.values(receipts.items || {}),
   example,
+  exampleDishes: [{ name: 'veggie lasagna', servings: 8 }],
 };
 
 // The website loads prices from app/public/data.json; receipt prices stay

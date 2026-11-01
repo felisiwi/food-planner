@@ -2,7 +2,7 @@
 // Both may be unavailable (opened outside Claude, signed out, declined); the
 // app then works from the embedded example list and browser storage.
 import { useEffect, useState } from 'react';
-import { ingredientsPrompt, cleanIngredients } from '../../lib/ingredients.mjs';
+import { ingredientsPrompt, cleanPlan } from '../../lib/ingredients.mjs';
 
 export function useCapability(name) {
   const [cap, setCap] = useState(undefined); // undefined = still loading, null = unavailable
@@ -41,8 +41,8 @@ export function useDoc(db, key, initial) {
 }
 
 export async function ingredientsFor(sample, meals, signal, onWait) {
-  if (sample.web) return cleanIngredients(await sample.meals(meals, { signal, onWait }));
-  return cleanIngredients(await sample.json(ingredientsPrompt(meals), { signal }));
+  if (sample.web) return cleanPlan(await sample.meals(meals, { signal, onWait }));
+  return cleanPlan(await sample.json(ingredientsPrompt(meals), { signal }));
 }
 
 export function sampleErrorText(e) {

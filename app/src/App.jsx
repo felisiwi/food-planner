@@ -5,7 +5,7 @@ import { Switch } from '@base-ui/react/switch';
 import { Drawer } from '@base-ui/react/drawer';
 import { Dialog } from '@base-ui/react/dialog';
 import { Toast } from '@base-ui/react/toast';
-import { DATA, morrisonsFor, lidlFor, aldiFor, aldiNoPrice, gbp, perUnit, unitText, orderOptions, choosePack, sizeText, needAmount, probablyHave } from './data.js';
+import { DATA, morrisonsFor, lidlFor, aldiFor, aldiNoPrice, gbp, perUnit, unitText, orderOptions, choosePack, sizeText, needAmount, probablyHave, shareFor, usedCost, dishesFor } from './data.js';
 import { useCapability, useDoc, ingredientsFor, sampleErrorText } from './claude.js';
 
 const isWeb = () => !!window.__FP_WEB__;
@@ -144,6 +144,34 @@ function Planner({ db, sample }) {
     const o = same.reduce((a, r) => a + r.cost[s.id], 0);
     return { s, n: same.length, m, o, diff: m - o, pct: m > 0 ? Math.round(((m - o) / m) * 100) : 0 };
   }).filter((c) => c.n > 0);
+  // Cost per portion of each planned meal: what the meal uses (not whole packs),
+  // cupboard items included, at Morrisons and with the cheapest split.
+  const dishes = isExample ? DATA.exampleDishes || dishesFor({}, items) : dishesFor(plan, items);
+  const dishCosts = useMemo(() => {
+    const byKey = new Map(rows.map((r) => [r.k, r]));
+    return dishes.map((d) => {
+      let m = 0, split = 0, approx = false;
+      const missing = [];
+      for (const it of items) {
+        if (it.skip) continue;
+        const inDish = dishes.length === 1 || (it.meals || []).map((x) => x.toLowerCase()).includes(d.name);
+        if (!inDish) continue;
+        const qty = shareFor(it, d.name, dishes.length);
+        const k = key(it.item);
+        const r = byKey.get(k);
+        const mSel = r ? r.sel.morrisons : choosePack(morrisonsFor(k), it, picks.morrisons?.[k], legacyUnit);
+        const mc = qty ? usedCost(mSel?.opt, mSel, it, qty) : null;
+        if (!mc) { missing.push(it.item); continue; }
+        m += mc.cost;
+        approx ||= mc.approx;
+        const bSel = r?.best ? r.sel[r.best] : mSel;
+        split += (usedCost(bSel?.opt, bSel, it, qty) || mc).cost;
+      }
+      const servings = d.servings || 2;
+      return { ...d, servings, assumed: !d.servings, total: m, split, missing, approx };
+    });
+  }, [rows, items, plan.dishes, plan.meals, picks, legacyUnit]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const toggleShop = (id, on) => {
     const next = on ? [...new Set([...shopsOn, id])] : shopsOn.filter((x) => x !== id);
     if (next.length) setShopsOn(STORES.map((s) => s.id).filter((x) => next.includes(x)));
@@ -192,12 +220,19 @@ function Planner({ db, sample }) {
         <Tabs.Panel value="plan" className="panel">
           <PlanPanel
             sample={sample} plan={plan} setPlan={setPlan} items={items} isExample={isExample}
-            pantrySet={pantrySet} pantry={pantry} setPantry={setPantry} toast={toast} dbReady={dbReady} db={db}
+            pantrySet={pantrySet} pantry={pantry} setPantry={setPantry} toast={toast} dbReady={dbReady} db={db} dishCosts={dishCosts}
             onDone={() => setTab('shop')}
           />
         </Tabs.Panel>
 
         <Tabs.Panel value="shop" className="panel">
+          {dishCosts.some((d) => d.total > 0) && (
+            <p className="portion-line">
+              {dishCosts.filter((d) => d.total > 0).map((d, i) => (
+                <span key={d.name}>{i > 0 && ' · '}<span className="cap">{d.name}</span> <b>{gbp(d.total / d.servings)}</b> a portion</span>
+              ))}
+            </p>
+          )}
           <label className="switch-row">
             <Switch.Root className="switch" checked={split} onCheckedChange={setSplit}>
               <Switch.Thumb className="switch-thumb" />
@@ -239,7 +274,7 @@ function Planner({ db, sample }) {
   );
 }
 
-function PlanPanel({ sample, plan, setPlan, items, isExample, pantrySet, pantry, setPantry, toast, onDone, db }) {
+function PlanPanel({ sample, plan, setPlan, items, isExample, pantrySet, pantry, setPantry, toast, onDone, db, dishCosts }) {
   const [meals, setMeals] = useState(plan.meals || '');
   const [busy, setBusy] = useState(false);
   const [queued, setQueued] = useState(false);
@@ -253,8 +288,8 @@ function PlanPanel({ sample, plan, setPlan, items, isExample, pantrySet, pantry,
     ctl.current = new AbortController();
     setBusy(true); setError(''); setQueued(false);
     try {
-      const list = await ingredientsFor(sample, meals.trim(), ctl.current.signal, () => setQueued(true));
-      setPlan({ meals: meals.trim(), items: list });
+      const { dishes, items: list } = await ingredientsFor(sample, meals.trim(), ctl.current.signal, () => setQueued(true));
+      setPlan({ meals: meals.trim(), items: list, dishes });
       toast.add({ title: `${list.length} ingredients`, description: 'Untick anything you already have.' });
     } catch (e) {
       setError(sampleErrorText(e));
@@ -305,6 +340,8 @@ function PlanPanel({ sample, plan, setPlan, items, isExample, pantrySet, pantry,
       {error && <p className="error">{error}</p>}
       {db === null && <p className="note">{isWeb() ? 'Your list is saved on this device only. Open your personal link to keep it in sync between phone and laptop.' : 'Your list is saved on this device only. Open the page in Claude to keep it in sync between phone and laptop.'}</p>}
 
+      <DishCosts dishCosts={dishCosts} />
+
       <h2 className="h2">
         <span>{isExample ? 'Example: veggie lasagna for 8' : 'Ingredients'}</span>
         <span className="h2-n">tick what you have at home</span>
@@ -346,9 +383,10 @@ function PlanPanel({ sample, plan, setPlan, items, isExample, pantrySet, pantry,
   );
 }
 
-function Thumb({ src }) {
+function Thumb({ src, big }) {
   const [bad, setBad] = useState(false);
-  return src && !bad ? <img className="thumb" loading="lazy" alt="" src={src} onError={() => setBad(true)} /> : <span className="thumb ph">🛒</span>;
+  const cls = 'thumb' + (big ? ' big' : '');
+  return src && !bad ? <img className={cls} loading="lazy" alt="" src={src} onError={() => setBad(true)} /> : <span className={cls + ' ph'} aria-hidden="true">🛒</span>;
 }
 
 function Tag({ o }) {
@@ -368,12 +406,14 @@ const packSizeText = (sel) =>
   !sel.size ? 'size not listed' : sel.size.loose ? 'loose, sold by the kg' : sel.count > 1 ? `${sel.count} × ${sizeText(sel.size)}` : sizeText(sel.size);
 
 // "500g · £0.53 · £1.06/kg": what one option is.
-function PackLine({ sel }) {
+function PackLine({ sel, short }) {
   if (!sel) return null;
   const u = perUnit(sel.opt);
+  // short: the price is shown big right below, so only repeat it for "each".
+  const price = short && sel.count <= 1 ? '' : ` · ${gbp(sel.opt.price)}${sel.count > 1 ? ' each' : ''}`;
   return (
     <div className="item-pack">
-      <b>{packSizeText(sel)}</b> · {gbp(sel.opt.price)}{sel.count > 1 ? ' each' : ''}{u ? ` · ${unitText(u)}` : ''}
+      <b>{packSizeText(sel)}</b>{price}{u ? ` · ${unitText(u)}` : ''}
     </div>
   );
 }
@@ -501,6 +541,29 @@ function PickPanel({ r, sid, onPick }) {
   );
 }
 
+function DishCosts({ dishCosts }) {
+  const shown = dishCosts.filter((d) => d.total > 0);
+  if (!shown.length) return null;
+  return (
+    <section className="dishes" aria-label="Cost per portion">
+      {shown.map((d) => (
+        <div key={d.name} className="dish">
+          <div className="dish-top">
+            <span className="dish-name">{d.name}</span>
+            <span className="dish-pp"><b>{gbp(d.total / d.servings)}</b> a portion</span>
+          </div>
+          <div className="dish-sub">
+            Serves {d.servings}{d.assumed ? ' (assumed)' : ''} · {gbp(d.total)} of ingredients at Morrisons
+            {d.split < d.total - 0.05 && <> · {gbp(d.split / d.servings)} a portion with the cheapest split</>}
+          </div>
+          {d.missing.length > 0 && <div className="dish-note">Not counted (no amount or price yet): {d.missing.join(', ')}</div>}
+        </div>
+      ))}
+      <p className="note">Counts what each meal uses, not whole packs, and includes cupboard items at their shop price.</p>
+    </section>
+  );
+}
+
 function ShopList({ store, rows, ticks, onTick, onPick }) {
   if (!rows.length) return null;
   const groups = {};
@@ -526,23 +589,18 @@ function ShopList({ store, rows, ticks, onTick, onPick }) {
             const sel = r.sel[store.id];
             return (
               <div key={r.k} className={'item' + (done ? ' done' : '')}>
-                <Checkbox.Root className="cb big" checked={done} onCheckedChange={(v) => onTick(r.k, v)} aria-label={`Got ${r.it.item}`}>
-                  <Checkbox.Indicator className="cb-ind"><Check /></Checkbox.Indicator>
-                </Checkbox.Root>
-                <Thumb src={o?.image} />
+                <Thumb src={o?.image} big />
                 <div className="item-main">
                   <div className="item-name">{o ? o.name : r.it.item}</div>
-                  <div className="item-sub">
-                    for “{r.it.item}”{needText(r.it) ? ` · need ${needText(r.it)}` : ''}{r.have ? ' · probably in your cupboard' : ''}
+                  <PackLine sel={sel} short />
+                  <div className="item-foot">
+                    <span className="item-price">{r.cost[store.id] != null ? gbp(r.cost[store.id]) : 'No price'}</span>
+                    <Tag o={o} />
                   </div>
-                  <PackLine sel={sel} />
-                  <Tag o={o} />
                 </div>
-                <div className="item-price">
-                  {r.cost[store.id] != null ? gbp(r.cost[store.id]) : '–'}
-                  {sel?.count > 1 && <span className="q">{sel.count} × {gbp(o.price)}</span>}
-                  {r.unit[store.id] && <span className="q">{unitText(r.unit[store.id])}</span>}
-                </div>
+                <Checkbox.Root className="tick" checked={done} onCheckedChange={(v) => onTick(r.k, v)} aria-label={`Got ${o ? o.name : r.it.item}`}>
+                  <Checkbox.Indicator className="cb-ind"><Check /></Checkbox.Indicator>
+                </Checkbox.Root>
                 <PickPanel r={r} sid={store.id} onPick={(v) => onPick(r.k, v)} />
               </div>
             );
