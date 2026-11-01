@@ -9,6 +9,7 @@ import { existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { parseList } from './lib/list.mjs';
 import { fixUnit } from './lib/morrisons.mjs';
+import { toProduct as aldiProduct } from './lib/aldi.mjs';
 
 const read = async (f, fallback) => (existsSync(f) ? JSON.parse(await readFile(f, 'utf8')) : fallback);
 
@@ -27,6 +28,10 @@ for (const [term, v] of Object.entries(results.stores?.morrisons || {})) if (v.p
 
 // Lidl: the whole online range (food only) and receipt prices.
 const lidl = (results.ranges?.lidl?.products || []).filter((p) => p.isFood && p.price > 0);
+
+// Aldi: first page of each food category (data/aldi-range.json, made by aldi.mjs).
+const aldiRange = await read('data/aldi-range.json', { products: [] });
+const aldi = aldiRange.products.map(aldiProduct).filter((p) => p.price > 0);
 
 // Example list for first use: list.txt.
 // list.txt only says "2 x"; these are illustrative amounts for a big veggie lasagna (about 8 portions) so the
@@ -58,6 +63,8 @@ const data = {
   updatedAt: results.updatedAt || Date.now(),
   morrisons,
   lidl,
+  aldi,
+  aldiUpdatedAt: aldiRange.fetchedAt || null,
   receipts: Object.values(receipts.items || {}),
   example,
 };
@@ -87,5 +94,5 @@ await writeFile('app.artifact.html', fragment);
 
 console.log(
   `Wrote app.html and app/public/data.json (${Math.round(html.length / 1024)} KB): ${Object.keys(morrisons).length} Morrisons searches, ` +
-    `${lidl.length} Lidl products, ${data.receipts.length} receipt prices.`,
+    `${lidl.length} Lidl products, ${aldi.length} Aldi products, ${data.receipts.length} receipt prices.`,
 );

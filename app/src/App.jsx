@@ -5,7 +5,7 @@ import { Switch } from '@base-ui/react/switch';
 import { Drawer } from '@base-ui/react/drawer';
 import { Dialog } from '@base-ui/react/dialog';
 import { Toast } from '@base-ui/react/toast';
-import { DATA, morrisonsFor, lidlFor, gbp, perUnit, unitText, orderOptions, choosePack, sizeText, needAmount, probablyHave } from './data.js';
+import { DATA, morrisonsFor, lidlFor, aldiFor, gbp, perUnit, unitText, orderOptions, choosePack, sizeText, needAmount, probablyHave } from './data.js';
 import { useCapability, useDoc, ingredientsFor, sampleErrorText } from './claude.js';
 
 const isWeb = () => !!window.__FP_WEB__;
@@ -13,7 +13,9 @@ const isWeb = () => !!window.__FP_WEB__;
 const STORES = [
   { id: 'morrisons', label: 'Morrisons', place: 'Stamford Hill' },
   { id: 'lidl', label: 'Lidl', place: 'Amhurst Park' },
+  { id: 'aldi', label: 'Aldi', place: 'online prices' },
 ];
+const label = (id) => STORES.find((s) => s.id === id)?.label || id;
 const key = (s) => s.trim().toLowerCase();
 const needText = (it) => {
   if (!it.amount) return '';
@@ -67,6 +69,8 @@ function Planner({ db, sample }) {
   const [picks, setPicks] = useDoc(db || null, 'picks', {});
   const [mine, setMine] = useDoc(db || null, 'myprices', {});
   const [queue, setQueue] = useDoc(db || null, 'queue', []);
+  const [shopsOn, setShopsOn] = useDoc(db || null, 'shops', STORES.map((s) => s.id));
+  const active = STORES.filter((s) => shopsOn.includes(s.id));
   const [tab, setTab] = useState('plan');
   const [split, setSplit] = useState(true);
   // Old saves stored a position in a list whose order depended on this (now removed) switch.
@@ -88,6 +92,7 @@ function Planner({ db, sample }) {
             ...(mine.lidl?.[k] ? [{ name: it.item, price: mine.lidl[k].price, date: mine.lidl[k].date, source: 'you', match: true, category: [] }] : []),
             ...lidlFor(k),
           ],
+          aldi: aldiFor(k),
         };
         // sel = the pack(s) picked at each shop: which product, how many, what it costs, whether it's oversized.
         const sel = Object.fromEntries(STORES.map((s) => [s.id, choosePack(opts[s.id], it, picks[s.id]?.[k], legacyUnit)]));
@@ -102,13 +107,16 @@ function Planner({ db, sample }) {
         const unit = Object.fromEntries(STORES.map((s) => [s.id, perUnit(chosen[s.id])]));
         // Compare per kg/l when both shops give the same unit, otherwise per pack.
         // An oversized pick is judged by what you'd actually pay, so a cheap-per-kg giant bag doesn't win the split.
-        const oversized = STORES.some((s) => sel[s.id]?.big);
-        const sameUnit = !oversized && unit.morrisons && unit.lidl && unit.morrisons.u === unit.lidl.u;
+        // With more than two shops: per kg/l only when every shop that has it gives the same unit.
+        const priced = active.filter((s) => cost[s.id] != null);
+        const oversized = priced.some((s) => sel[s.id]?.big);
+        const units = priced.map((s) => unit[s.id]?.u);
+        const sameUnit = !oversized && priced.length > 1 && units.every((u) => u && u === units[0]);
         const value = (id) => (sameUnit ? unit[id].v : cost[id]);
-        const known = STORES.filter((s) => cost[s.id] != null).sort((a, b) => value(a.id) - value(b.id));
-        return { it, k, opts, sel, alts, chosen, cost, unit, have: probablyHave(it), basis: sameUnit ? 'per ' + unit.lidl.u : oversized ? 'for what you’d pay' : 'per pack', value, best: known[0]?.id || null };
+        const known = [...priced].sort((a, b) => value(a.id) - value(b.id));
+        return { it, k, opts, sel, alts, chosen, cost, unit, have: probablyHave(it), basis: sameUnit ? 'per ' + units[0] : oversized ? 'for what you’d pay' : 'per pack', value, best: known[0]?.id || null };
       }),
-    [needed, mine, picks, legacyUnit],
+    [needed, mine, picks, legacyUnit, shopsOn],
   );
 
   // Ingredients with no Morrisons price yet go on the laptop's to-do list.
@@ -121,16 +129,25 @@ function Planner({ db, sample }) {
 
   // Save a pick for one item at one shop ('both' = both shops, used by the Compare toggle).
   const setPick = (sid, k, value) => {
-    const ids = sid === 'both' ? STORES.map((s) => s.id) : [sid];
+    const ids = sid === 'both' ? active.map((s) => s.id) : [sid];
     setPicks({ ...picks, ...Object.fromEntries(ids.map((id) => [id, { ...(picks[id] || {}), [k]: value }])) });
   };
 
   const totals = Object.fromEntries(STORES.map((s) => [s.id, rows.reduce((a, r) => a + (r.cost[s.id] ?? 0), 0)]));
   const counts = Object.fromEntries(STORES.map((s) => [s.id, rows.filter((r) => r.cost[s.id] != null).length]));
   const splitTotal = rows.reduce((a, r) => a + (r.best ? r.cost[r.best] : 0), 0);
-  const both = rows.filter((r) => r.cost.morrisons != null && r.cost.lidl != null);
-  const bothM = both.reduce((a, r) => a + r.cost.morrisons, 0);
-  const bothL = both.reduce((a, r) => a + r.cost.lidl, 0);
+  // Like-for-like: only the items both Morrisons and the other shop have, so a shop
+  // with fewer items listed doesn't look cheaper just for being incomplete.
+  const vsMorrisons = active.filter((s) => s.id !== 'morrisons').map((s) => {
+    const same = rows.filter((r) => r.cost.morrisons != null && r.cost[s.id] != null);
+    const m = same.reduce((a, r) => a + r.cost.morrisons, 0);
+    const o = same.reduce((a, r) => a + r.cost[s.id], 0);
+    return { s, n: same.length, m, o, diff: m - o, pct: m > 0 ? Math.round(((m - o) / m) * 100) : 0 };
+  }).filter((c) => c.n > 0);
+  const toggleShop = (id, on) => {
+    const next = on ? [...new Set([...shopsOn, id])] : shopsOn.filter((x) => x !== id);
+    if (next.length) setShopsOn(STORES.map((s) => s.id).filter((x) => next.includes(x)));
+  };
 
   return (
     <>
@@ -141,8 +158,8 @@ function Planner({ db, sample }) {
             {needed.length} to buy{items.length > needed.length ? ` · ${items.length - needed.length} already at home` : ''} · prices from{' '}
             {new Date(DATA.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
           </p>
-          <div className="totals">
-            {STORES.map((s) => (
+          <div className="totals" style={{ gridTemplateColumns: `repeat(${active.length}, 1fr)` }}>
+            {active.map((s) => (
               <div key={s.id} className={'tot ' + s.id}>
                 <span className="tot-s">{s.label}</span>
                 <span className="tot-n">{gbp(totals[s.id])}</span>
@@ -150,10 +167,15 @@ function Planner({ db, sample }) {
               </div>
             ))}
           </div>
-          {both.length > 0 && (
+          {vsMorrisons.length > 0 && (
             <p className="verdict">
-              Priced at both ({both.length}): Morrisons {gbp(bothM)} vs Lidl {gbp(bothL)}.{' '}
-              Cheapest split <b>{gbp(splitTotal)}</b>.
+              Same items vs Morrisons:{' '}
+              {vsMorrisons.map((c, i) => (
+                <span key={c.s.id}>
+                  {i > 0 && ' · '}
+                  {c.s.label} <b>{Math.abs(c.pct)}% {c.diff >= 0 ? 'cheaper' : 'dearer'}</b> ({c.n} items)
+                </span>
+              ))}
             </p>
           )}
         </div>
@@ -182,7 +204,7 @@ function Planner({ db, sample }) {
             </Switch.Root>
             Split between shops, cheapest first
           </label>
-          {STORES.map((s) => {
+          {active.map((s) => {
             const mineRows = rows.filter((r) => (split ? r.best === s.id || (!r.best && s.id === 'morrisons') : true));
             return (
               <ShopList
@@ -198,8 +220,9 @@ function Planner({ db, sample }) {
         </Tabs.Panel>
 
         <Tabs.Panel value="compare" className="panel">
+          <Basket rows={rows} active={active} vsMorrisons={vsMorrisons} toggleShop={toggleShop} isExample={isExample} />
           {rows.map((r) => (
-            <CompareRow key={r.k} r={r} onPick={(sid, v) => setPick(sid, r.k, v)}
+            <CompareRow key={r.k} r={r} active={active} onPick={(sid, v) => setPick(sid, r.k, v)}
               onPrice={(price) => {
                 const lidl = { ...(mine.lidl || {}) };
                 if (price > 0) lidl[r.k] = { price, date: new Date().toISOString().slice(0, 10) };
@@ -209,7 +232,7 @@ function Planner({ db, sample }) {
               }}
             />
           ))}
-          <p className="note">Cheaper is judged per kg or litre when both shops show it, otherwise per pack, so check sizes then. Totals are what you'd pay for the packs shown.</p>
+          <p className="note">Cheaper is judged per kg or litre when every shop shows it, otherwise per pack, so check sizes then. Totals are what you'd pay for the packs shown.</p>
         </Tabs.Panel>
       </Tabs.Root>
     </>
@@ -331,6 +354,7 @@ function Thumb({ src }) {
 function Tag({ o }) {
   if (!o) return null;
   if (o.source === 'you') return <span className="tag">Added by you</span>;
+  if (o.similar) return <span className="tag">Similar: {o.similar}</span>;
   if (o.source === 'receipt') return <span className="tag">From a receipt{o.date ? `, ${o.date}` : ''}{o.match === false ? ' · check item' : ''}</span>;
   return o.offer ? <span className="tag offer">{o.offer}</span> : null;
 }
@@ -528,20 +552,77 @@ function ShopList({ store, rows, ticks, onTick, onPick }) {
   );
 }
 
-function CompareRow({ r, onPrice, onPick }) {
-  const m = r.cost.morrisons, l = r.cost.lidl;
-  const both = m != null && l != null;
-  const vm = both ? r.value('morrisons') : null, vl = both ? r.value('lidl') : null;
-  const winner = both ? (vl < vm * 0.98 ? 'lidl' : vm < vl * 0.98 ? 'morrisons' : null) : null; // within 2% counts as the same
-  const pct = winner ? Math.round((Math.abs(vm - vl) / Math.max(vm, vl)) * 100) : 0;
+// Your whole list at each shop, and like-for-like against Morrisons.
+function Basket({ rows, active, vsMorrisons, toggleShop, isExample }) {
+  const total = (id) => rows.reduce((a, r) => a + (r.cost[id] ?? 0), 0);
+  const count = (id) => rows.filter((r) => r.cost[id] != null).length;
+  return (
+    <section className="basket" aria-label="Your basket">
+      <div className="basket-h">
+        <span className="basket-t">{isExample ? 'Example basket' : 'Your basket'}: {rows.length} items</span>
+        <div className="shop-chips" role="group" aria-label="Shops to compare">
+          {STORES.map((s) => {
+            const on = active.some((a) => a.id === s.id);
+            return (
+              <button key={s.id} type="button" className={'chip ' + s.id + (on ? ' on' : '')} aria-pressed={on}
+                onClick={() => toggleShop(s.id, !on)} disabled={on && active.length === 1}>
+                {s.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <table className="basket-tb">
+        <thead>
+          <tr><th scope="col">Shop</th><th scope="col">Whole list</th><th scope="col">Same items as Morrisons</th></tr>
+        </thead>
+        <tbody>
+          {active.map((s) => {
+            const c = vsMorrisons.find((x) => x.s.id === s.id);
+            return (
+              <tr key={s.id}>
+                <th scope="row" className={'basket-s ' + s.id}>{s.label}</th>
+                <td>
+                  <b>{gbp(total(s.id))}</b>
+                  <span className="basket-n">{count(s.id)} of {rows.length} listed</span>
+                </td>
+                <td>
+                  {s.id === 'morrisons' ? <span className="basket-n">the reference</span> : c ? (
+                    <>
+                      <b>{gbp(c.o)}</b> vs {gbp(c.m)}
+                      <span className={'basket-n ' + (c.diff > 0.005 ? 'good' : c.diff < -0.005 ? 'bad' : '')}>
+                        {c.n} items · {Math.abs(c.diff) < 0.005 ? 'same' : `${gbp(Math.abs(c.diff))} ${c.diff > 0 ? 'cheaper' : 'dearer'} (${Math.abs(c.pct)}%)`}
+                      </span>
+                    </>
+                  ) : <span className="basket-n">nothing in common yet</span>}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {active.some((s) => s.id === 'aldi') && (
+        <p className="note">Aldi prices come from aldi.co.uk (the first page of each food category, about 1,000 everyday products, checked 1 Nov), so a few items may be missing. Lidl only shows part of its range online; Aldi’s prices are usually close to Lidl’s.</p>
+      )}
+    </section>
+  );
+}
+
+function CompareRow({ r, active, onPrice, onPick }) {
+  const priced = active.filter((s) => r.cost[s.id] != null);
+  const vals = priced.map((s) => ({ id: s.id, v: r.value(s.id) })).sort((a, b) => a.v - b.v);
+  // Cheapest wins only when it's more than 2% below the next one.
+  const winner = vals.length > 1 && vals[0].v < vals[1].v * 0.98 ? vals[0].id : null;
+  const ref = winner && (winner !== 'morrisons' && r.cost.morrisons != null ? vals.find((x) => x.id === 'morrisons') : vals[1]);
+  const pct = winner ? Math.round(((ref.v - vals[0].v) / ref.v) * 100) : 0;
   return (
     <div className="cmp">
       <div className="cmp-top">
         <span className="cmp-t">{r.it.item}</span>
-        {winner && <span className={'badge ' + winner}>{winner === 'lidl' ? 'Lidl' : 'Morrisons'} {pct}% cheaper {r.basis}</span>}
+        {winner && <span className={'badge ' + winner}>{label(winner)} {pct}% less than {label(ref.id)} {r.basis}</span>}
       </div>
-      <div className="cmp-cols">
-        {STORES.map((s) => {
+      <div className="cmp-cols" style={{ gridTemplateColumns: `repeat(${active.length}, minmax(0, 1fr))` }}>
+        {active.map((s) => {
           const o = r.chosen[s.id];
           const sel = r.sel[s.id];
           return (

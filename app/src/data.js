@@ -1,8 +1,9 @@
 // Price data embedded at build time, and matching a shopping item to products.
 import { rank, relevant } from '../../lib/match.mjs';
 import { match as lidlMatch } from '../../lib/lidl.mjs';
+import { match as aldiMatch } from '../../lib/aldi.mjs';
 
-export const DATA = window.__FP_DATA__ || { morrisons: {}, lidl: [], receipts: [], updatedAt: Date.now(), example: [] };
+export const DATA = window.__FP_DATA__ || { morrisons: {}, lidl: [], aldi: [], receipts: [], updatedAt: Date.now(), example: [] };
 
 // The website loads its data after this module has run, so DATA is filled in place.
 export function setData(d) {
@@ -40,8 +41,28 @@ function fromReceipts(term) {
       unitPrice: r.perKg ? r.price : null, unitLabel: r.perKg ? 'per kg' : '' }));
 }
 
+// "plant revolution meat free mince" is a Morrisons brand; at other shops look
+// for "meat free mince" instead, and label what comes back as a similar product.
+function orSimilar(term, find) {
+  const found = find(term);
+  if (found.length) return found;
+  const w = term.split(/\s+/);
+  // Only drop two or more leading words (a brand name), never a single describing
+  // word: "vegetable stock cubes" must not become chicken stock cubes.
+  for (let n = Math.min(3, w.length - 2); n >= 2; n--) {
+    const shorter = w.slice(-n).join(' ');
+    const alt = find(shorter);
+    if (alt.length) return alt.map((p) => ({ ...p, similar: shorter }));
+  }
+  return [];
+}
+
 export function lidlFor(term) {
-  return rank(term, [...fromReceipts(term), ...lidlMatch(DATA.lidl || [], term, 12)]);
+  return orSimilar(term, (t) => rank(t, [...fromReceipts(t), ...lidlMatch(DATA.lidl || [], t, 12)]));
+}
+
+export function aldiFor(term) {
+  return orSimilar(term, (t) => rank(t, aldiMatch(DATA.aldi || [], t, 12)));
 }
 
 export const gbp = (n) => '£' + Number(n).toFixed(2);
