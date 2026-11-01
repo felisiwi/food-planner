@@ -37,6 +37,44 @@ for (const store of STORES) {
   console.log(`\n${store.label}`);
   const cache = (db.stores[store.id] ||= {});
   let fetched = 0;
+
+  // Stores with a small online range (Lidl) are fetched whole, once a day, then
+  // matched locally: fewer requests than one search per item, and nothing missed.
+  if (store.rangeUrl) {
+    const range = (db.ranges ||= {})[store.id];
+    let products = range && range.v === CACHE_VERSION && Date.now() - range.fetchedAt < CACHE_MS ? range.products : null;
+    if (products) console.log(`  cached  whole range (${products.length} products)`);
+    else {
+      const seen = new Map();
+      let total = null, complete = false;
+      for (let offset = 0; offset < 2000; offset += store.PAGE_SIZE) {
+        if (offset > 0) await sleep(DELAY_MS);
+        const res = await fetch(store.rangeUrl(offset), { headers: { 'User-Agent': UA, Accept: 'text/html' } });
+        if (res.status !== 200) {
+          console.error(`  Stopped ${store.label}: HTTP ${res.status} at offset ${offset}. Not retrying; run again later.`);
+          break;
+        }
+        const page = store.rangePage(await res.text());
+        total ??= page.total;
+        const before = seen.size;
+        for (const p of page.products) seen.set(p.id, p);
+        console.log(`  page    ${offset / store.PAGE_SIZE + 1}: ${seen.size}${total ? ' of ' + total : ''} products`);
+        if (seen.size === before || (total && seen.size >= total)) { complete = true; break; }
+      }
+      products = [...seen.values()];
+      if (complete) db.ranges[store.id] = { v: CACHE_VERSION, fetchedAt: Date.now(), products };
+      else console.error('  Range incomplete; matching what was fetched, not caching it.');
+    }
+    for (const { term } of items) {
+      const matches = store.match(products, term, 12);
+      cache[term] = { v: CACHE_VERSION, fetchedAt: Date.now(), products: matches };
+      const top = rank(term, matches)[0];
+      console.log(`  ${top ? 'ok     ' : 'none   '} ${term} → ${top ? `${top.name} £${top.price.toFixed(2)}` : 'not in Lidl\'s online range'}`);
+    }
+    await save();
+    continue;
+  }
+
   for (const { term } of items) {
     const hit = cache[term];
     if (hit && hit.v === CACHE_VERSION && Date.now() - hit.fetchedAt < CACHE_MS) {

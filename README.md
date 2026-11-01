@@ -35,7 +35,7 @@ One item per line, `2 x` for quantities, `#` for comments. Specific terms match 
 
 | | Morrisons | Lidl |
 |---|---|---|
-| Online | groceries.morrisons.com, the full range | lidl.co.uk, only part of the range (offers, specials, some staples) |
+| Online | groceries.morrisons.com, one search per item | lidl.co.uk whole published range (~500-700 products), fetched in ~11 pages once a day |
 | Gaps | rare | `prices/lidl.csv` and prices you add on the page |
 | Notes | national online prices, mostly match in-store | headline price may be the Lidl Plus price (tagged) |
 
