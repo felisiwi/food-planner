@@ -29,8 +29,29 @@ for (const [term, v] of Object.entries(results.stores?.morrisons || {})) if (v.p
 const lidl = (results.ranges?.lidl?.products || []).filter((p) => p.isFood && p.price > 0);
 
 // Example list for first use: list.txt.
+// list.txt only says "2 x"; these are illustrative amounts for a big veggie lasagna (about 8 portions) so the
+// example can show pack-size matching. A line left out of this table has no amount (size matching skips it).
+const EXAMPLE_NEED = {
+  'plant revolution meat free mince': [800, 'g'],
+  'lasagne sheets': [500, 'g'],
+  'chopped tomatoes': [3, 'tin'],
+  passata: [500, 'g'],
+  'brown onions': [3, 'item'],
+  garlic: [2, 'item'],
+  carrots: [500, 'g'],
+  celery: [1, 'item'],
+  'tomato puree': [3, 'tbsp'],
+  butter: [125, 'g'],
+  'plain flour': [500, 'g'],
+  'whole milk': [1, 'l'],
+  'mature cheddar': [300, 'g'],
+  mozzarella: [250, 'g'],
+};
 const example = existsSync('list.txt')
-  ? parseList(await readFile('list.txt', 'utf8')).map(({ qty, term }) => ({ item: term, amount: qty > 1 ? qty : null, unit: qty > 1 ? (/tomato|bean|chickpea|lentil/.test(term) ? 'tin' : 'pack') : '', meals: ['veggie lasagna'], staple: false }))
+  ? parseList(await readFile('list.txt', 'utf8')).map(({ qty, term }) => {
+      const [amount, unit] = EXAMPLE_NEED[term] || [qty > 1 ? qty : null, qty > 1 ? (/tomato|bean|chickpea|lentil/.test(term) ? 'tin' : 'pack') : ''];
+      return { item: term, amount, unit, meals: ['veggie lasagna'], staple: false };
+    })
   : [];
 
 const data = {

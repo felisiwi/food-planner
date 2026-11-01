@@ -41,6 +41,14 @@ cd app && npm install && cd ..
 node build-app.mjs --vite   # writes app.html (and app.artifact.html for claude.ai)
 ```
 
+**Pack sizes.** Each product's size is read from its name ("500g", "2 x 400g", "12's") or worked out from
+price / unit price, and compared with the amount the recipe needs (tins count as 400g). Every item has three
+one-tap choices: *Similar size* (default: cheapest pack, or 2-3 small packs, that is 0.85x to 2x what you need),
+*Cheapest per kg* and *Cheapest pack*, plus ‹ › to step through every option. A pack more than 2x what you need
+gets a warning with the similar-size alternative. Totals are what you'd pay for the packs shown; "which shop is
+cheaper" still compares per kg or litre. Picks are saved by product name in the synced `picks` doc.
+Tests for the size parser and picker: `cd app && npm test`.
+
 When opened in Claude, the page asks Claude for ingredients and keeps your plan, pantry,
 ticks and added prices in its shared storage, so phone and laptop stay in sync. Ingredients
 with no Morrisons price yet are queued for the laptop to look up.
