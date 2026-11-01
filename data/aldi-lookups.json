@@ -1,0 +1,668 @@
+{
+ "fetchedAt": 1793572018825,
+ "source": "aldi.co.uk product pages, looked up per list item",
+ "products": [
+  {
+   "term": "brie and cranberry bites",
+   "category": "lookup",
+   "name": "LET'S PARTY Brie & Cranberry Bites",
+   "size": "200 g",
+   "price": 1.99,
+   "unitText": "£9.95/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/let-s-party-brie-cranberry-bites-000000000586884003",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "mac and cheese",
+   "category": "lookup",
+   "name": "CUCINA Macaroni Cheese",
+   "size": "0.4 KG",
+   "price": 2.79,
+   "unitText": "£6.98/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/cucina-macaroni-cheese-000000000562436001",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "red apples",
+   "category": "lookup",
+   "name": "NATURE'S PICK British Royal Gala Apples",
+   "size": "6 Each",
+   "price": 1.59,
+   "unitText": "",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/nature-s-pick-british-royal-gala-apples-000000000000339923",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "red apples",
+   "category": "lookup",
+   "name": "NATURE'S PICK Braeburn Apples",
+   "size": "6 Each",
+   "price": 1.59,
+   "unitText": "£0.27/1 Each",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/nature-s-pick-braeburn-apples-000000000000339768",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "red apples",
+   "category": "lookup",
+   "name": "Nature's Pick Jazz Apples",
+   "size": "6 Each",
+   "price": 2.19,
+   "unitText": "£0.37/1 Each",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/nature-s-pick-jazz-apples-000000000000306530",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "british apples",
+   "category": "lookup",
+   "name": "NATURE'S PICK British Royal Gala Apples",
+   "size": "6 Each",
+   "price": 1.59,
+   "unitText": "",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/nature-s-pick-british-royal-gala-apples-000000000000339923",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "british apples",
+   "category": "lookup",
+   "name": "NATURE'S PICK British Mini Apples",
+   "size": "6 Each",
+   "price": 0.59,
+   "unitText": "£0.10/1 Each",
+   "was": 0.99,
+   "url": "https://www.aldi.co.uk/product/nature-s-pick-british-mini-apples-000000000000339878",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "british apples",
+   "category": "lookup",
+   "name": "NATURE'S PICK Cox Apples",
+   "size": "6 Each",
+   "price": 1.59,
+   "unitText": "£0.27/1 Each",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/nature-s-pick-cox-apples-000000000000339809",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "tinned fish",
+   "category": "lookup",
+   "name": "Drained & Ready to Eat Tuna Steaks in Water (THE FISHMONGER)",
+   "size": "110 g",
+   "price": 0.99,
+   "unitText": "£9.00/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/the-fishmonger-drained-ready-to-eat-tuna-steaks-in-water-000000000307807003",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "frozen petits pois",
+   "category": "lookup",
+   "name": "Specially Selected Petits Pois",
+   "size": "0.7 KG",
+   "price": 1.09,
+   "unitText": "£1.56/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/specially-selected-petits-pois-000000000000365781",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "frozen petits pois",
+   "category": "lookup",
+   "name": "FOUR SEASONS Garden Peas",
+   "size": "900 g",
+   "price": 1.09,
+   "unitText": "£1.21/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/four-seasons-garden-peas-000000000000366805",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "microwave wholegrain rice",
+   "category": "lookup",
+   "name": "WORLDWIDE FOODS Wholegrain Rice Pouch",
+   "size": "250 g",
+   "price": 0.55,
+   "unitText": "£2.20/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/worldwide-foods-wholegrain-rice-pouch-000000000000335662",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "washed baby spinach",
+   "category": "lookup",
+   "name": "NATURE'S PICK Baby Spinach",
+   "size": "240 g",
+   "price": 1.09,
+   "unitText": "£4.54/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/nature-s-pick-baby-spinach-000000000000339750",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "washed baby spinach",
+   "category": "lookup",
+   "name": "NATURE'S PICK British Baby Spinach",
+   "size": "0.45 KG",
+   "price": 1.59,
+   "unitText": "£3.53/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/nature-s-pick-british-baby-spinach-000000000000340023",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "fruit and nut muesli",
+   "category": "lookup",
+   "name": "HARVEST MORN Original Swiss Style Muesli",
+   "size": "1.1kg (approx.)",
+   "price": 2.29,
+   "unitText": "",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/harvest-morn-original-swiss-style-muesli-000000000336499001",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "fruit and nut muesli",
+   "category": "lookup",
+   "name": "HARVEST MORN No Added Sugar Swiss Style Muesli",
+   "size": "1.1kg (approx.)",
+   "price": 2.29,
+   "unitText": "",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/harvest-morn-no-added-sugar-swiss-style-muesli-000000000336499002",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "spinach",
+   "category": "lookup",
+   "name": "NATURE'S PICK Baby Spinach",
+   "size": "240 g",
+   "price": 1.09,
+   "unitText": "£4.54/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/nature-s-pick-baby-spinach-000000000000339750",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "spinach",
+   "category": "lookup",
+   "name": "NATURE'S PICK British Baby Spinach",
+   "size": "0.45 KG",
+   "price": 1.59,
+   "unitText": "£3.53/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/nature-s-pick-british-baby-spinach-000000000000340023",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "conference pears",
+   "category": "lookup",
+   "name": "NATURE'S PICK Ripe & Ready Conference Pears",
+   "size": "4 Each",
+   "price": 1.85,
+   "unitText": "£0.46/1 Each",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/nature-s-pick-ripe-ready-conference-pears-000000000000272944",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "gouda slices",
+   "category": "lookup",
+   "name": "EMPORIUM Dutch Gouda Cheese 16 Slices",
+   "size": "400 g",
+   "price": 2.89,
+   "unitText": "£7.23/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/emporium-dutch-gouda-cheese-16-slices-000000000423385002",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "iceberg lettuce each",
+   "category": "lookup",
+   "name": "NATURE'S PICK Iceberg Lettuce",
+   "size": "1 Each",
+   "price": 0.89,
+   "unitText": "£0.89/1 Each",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/nature-s-pick-iceberg-lettuce-000000000000339848",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "pitted mixed olives",
+   "category": "lookup",
+   "name": "THE DELI Black Spanish Olives pitted 320g",
+   "size": "320g (Approx.)",
+   "price": 0.89,
+   "unitText": "",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/the-deli-black-spanish-olives-pitted-320g-000000000658174002",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "courgettes",
+   "category": "lookup",
+   "name": "NATURE'S PICK Courgettes",
+   "size": "500 g",
+   "price": 1.39,
+   "unitText": "£2.78/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/nature-s-pick-courgettes-000000000000339808",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "tomato puree",
+   "category": "lookup",
+   "name": "CUCINA Tomato Puree Double Concentrate",
+   "size": "200 g",
+   "price": 0.59,
+   "unitText": "£2.95/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/cucina-tomato-puree-double-concentrate-000000000000679898",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "coconut milk",
+   "category": "lookup",
+   "name": "ASIA GREEN GARDEN Coconut Milk 400ml Full Fat",
+   "size": "400 ml",
+   "price": 0.75,
+   "unitText": "£1.88/1 L",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/asia-green-garden-coconut-milk-400ml-full-fat-000000000635586001",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "coconut milk",
+   "category": "lookup",
+   "name": "ASIA GREEN GARDEN Coconut Milk 400ml Reduced Fat",
+   "size": "400 ml",
+   "price": 0.75,
+   "unitText": "£1.88/1 L",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/asia-green-garden-coconut-milk-400ml-reduced-fat-000000000635586002",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "halloumi style fries",
+   "category": "lookup",
+   "name": "CRESTWOOD Halloumi Style Fries 10 Pack",
+   "size": "170 g",
+   "price": 1.79,
+   "unitText": "£10.53/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/crestwood-halloumi-style-fries-10-pack-000000000560309001",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "closed cup mushrooms",
+   "category": "lookup",
+   "name": "NATURE'S PICK British Closed Cup Mushrooms",
+   "size": "400 g",
+   "price": 0.89,
+   "unitText": "£2.23/1 KG",
+   "was": 1.29,
+   "url": "https://www.aldi.co.uk/product/nature-s-pick-british-closed-cup-mushrooms-000000000000340015",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "greek honey",
+   "category": "lookup",
+   "name": "Specially Selected Acacia Squeezy Honey",
+   "size": "340 g",
+   "price": 2.09,
+   "unitText": "£6.15/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/specially-selected-acacia-squeezy-honey-000000000337079004",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "feta cheese",
+   "category": "lookup",
+   "name": "EMPORIUM Greek Feta",
+   "size": "200 g",
+   "price": 1.69,
+   "unitText": "£8.45/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/emporium-greek-feta-000000000000557625",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "lamb leg chops",
+   "category": "lookup",
+   "name": "ASHFIELDS British Lamb Chops",
+   "size": "0.34 KG",
+   "price": 5.59,
+   "unitText": "£16.44/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/ashfields-british-lamb-chops-000000000661917001",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "salted rice cakes",
+   "category": "lookup",
+   "name": "SAVOUR BAKES Lightly Salted Rice Cakes",
+   "size": "130 g",
+   "price": 0.79,
+   "unitText": "£6.08/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/savour-bakes-lightly-salted-rice-cakes-000000000592284002",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "cornichons",
+   "category": "lookup",
+   "name": "THE DELI Cornichons & Crinkle Cut Gherkins",
+   "size": "0.19 Kg drained",
+   "price": 1.19,
+   "unitText": "£6.26/1 Kg drained",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/the-deli-cornichons-crinkle-cut-gherkins-000000000680853003",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "frozen country mixed veg",
+   "category": "lookup",
+   "name": "FOUR SEASONS Country Vegetable Mix",
+   "size": "1 KG",
+   "price": 1.39,
+   "unitText": "£1.39/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/four-seasons-country-vegetable-mix-000000000000365250",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "frozen country mixed veg",
+   "category": "lookup",
+   "name": "FOUR SEASONS Mixed Vegetables",
+   "size": "1 kg",
+   "price": 0.99,
+   "unitText": "£0.99/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/four-seasons-mixed-vegetables-000000000000366028",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "baby button mushrooms",
+   "category": "lookup",
+   "name": "NATURE'S PICK British Baby Button Mushrooms",
+   "size": "200 g",
+   "price": 0.95,
+   "unitText": "£4.75/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/nature-s-pick-button-mushrooms-000000000000339785",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "arborio rice",
+   "category": "lookup",
+   "name": "CUCINA Arborio Rice",
+   "size": "1 KG",
+   "price": 2.49,
+   "unitText": "£2.49/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/cucina-arborio-rice-000000000000262588",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "chicken bao buns",
+   "category": "lookup",
+   "name": "HALLOWEEN AAAHMAZING BBQ Chicken Halloween Bao Buns",
+   "size": "258 g",
+   "price": 3.99,
+   "unitText": "£15.47/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/halloween-aaahmazing-bbq-chicken-halloween-bao-buns-000000000630300001",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "antipasti selection",
+   "category": "lookup",
+   "name": "Specially Selected Marinated Olive & Antipasti Salad",
+   "size": "145 g",
+   "price": 2.19,
+   "unitText": "£15.10/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/specially-selected-marinated-olive-antipasti-salad-000000000528813007",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "antipasti selection",
+   "category": "lookup",
+   "name": "THE DELI Ploughmans Olives & Antipasti",
+   "size": "150 g",
+   "price": 1.99,
+   "unitText": "£13.27/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/the-deli-ploughmans-olives-antipasti-000000000535632005",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "breadsticks",
+   "category": "lookup",
+   "name": "Original Grissini Breadsticks (SAVOUR BAKES)",
+   "size": "125 g",
+   "price": 0.49,
+   "unitText": "£3.92/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/savour-bakes-original-grissini-breadsticks-000000000000384741",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "medium oranges",
+   "category": "lookup",
+   "name": "NATURE'S PICK Oranges",
+   "size": "5 Each",
+   "price": 1.39,
+   "unitText": "£0.28/1 Each",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/nature-s-pick-oranges-000000000000266773",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "olives",
+   "category": "lookup",
+   "name": "THE DELI Black Spanish Olives pitted 320g",
+   "size": "320g (Approx.)",
+   "price": 0.89,
+   "unitText": "",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/the-deli-black-spanish-olives-pitted-320g-000000000658174002",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "vegan burgers sausages",
+   "category": "lookup",
+   "name": "PLANT MENU Ultimate No Beef Burgers 2 Pack",
+   "size": "270g",
+   "price": 2.69,
+   "unitText": "",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/plant-menu-ultimate-no-beef-burgers-2-pack-000000000501796001",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "vegan burgers sausages",
+   "category": "lookup",
+   "name": "PLANT MENU Ultimate No Pork Sausages 6 Pack",
+   "size": "270 g",
+   "price": 2.69,
+   "unitText": "£9.96/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/plant-menu-ultimate-sausage-burger-000000000501796002",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "chicken mince",
+   "category": "lookup",
+   "name": "ASHFIELDS Lean Chicken Mince 5% Fat",
+   "size": "500 g",
+   "price": 2.49,
+   "unitText": "£4.98/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/ashfields-lean-chicken-mince-5-fat-000000000451260002",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "fat reduced houmous",
+   "category": "lookup",
+   "name": "THE DELI Reduced Fat Houmous",
+   "size": "200 G",
+   "price": 0.95,
+   "unitText": "£0.48/100 G",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/the-deli-reduced-fat-houmous-000000000403915002",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "fat reduced houmous",
+   "category": "lookup",
+   "name": "THE DELI Houmous",
+   "size": "200 g",
+   "price": 0.95,
+   "unitText": "£4.75/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/the-deli-houmous-000000000403915001",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "chickpeas",
+   "category": "lookup",
+   "name": "FOUR SEASONS Chickpeas",
+   "size": "0.265 Kg drained",
+   "price": 0.41,
+   "unitText": "£1.55/1 Kg drained",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/four-seasons-chickpeas-000000000000625258",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "fine beans",
+   "category": "lookup",
+   "name": "Specially Selected Extra Fine Beans 220g",
+   "size": "220 g",
+   "price": 1.55,
+   "unitText": "£7.05/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/specially-selected-extra-fine-beans-220g-000000000000660363",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "passata",
+   "category": "lookup",
+   "name": "Specially Selected Basil & Oregano Passata Rustica",
+   "size": "690 g",
+   "price": 1.95,
+   "unitText": "£2.83/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/specially-selected-basil-oregano-passata-rustica-000000000435417001",
+   "image": "",
+   "available": true
+  },
+  {
+   "term": "jasmine rice",
+   "category": "lookup",
+   "name": "WORLDWIDE FOODS Ready-To-Heat Sticky Jasmine Rice",
+   "size": "250 g",
+   "price": 0.55,
+   "unitText": "£2.20/1 KG",
+   "was": null,
+   "url": "https://www.aldi.co.uk/product/worldwide-foods-ready-to-heat-sticky-jasmine-rice-000000000726161002",
+   "image": "",
+   "available": true
+  }
+ ],
+ "unpriced": {
+  "pomegranate each": [
+   {
+    "name": "NATURE'S PICK Pomegranate",
+    "url": "https://www.aldi.co.uk/product/nature-s-pick-pomegranate-000000000000278540"
+   }
+  ],
+  "fairtrade light brown soft sugar": [
+   {
+    "name": "THE PANTRY Light Brown Soft Sugar",
+    "url": "https://www.aldi.co.uk/product/the-pantry-light-brown-soft-sugar-000000000387457002"
+   }
+  ],
+  "fairtrade dark brown soft sugar": [
+   {
+    "name": "THE PANTRY Dark Brown Soft Sugar",
+    "url": "https://www.aldi.co.uk/product/the-pantry-dark-brown-soft-sugar-000000000387457001"
+   }
+  ],
+  "duck bao buns": [
+   {
+    "name": "Inspired Cuisine Duck Bao Buns 6 Pack",
+    "url": "https://www.aldi.co.uk/product/inspired-cuisine-duck-bao-buns-6-pack-000000000600173002"
+   }
+  ],
+  "prosciutto cotto": [
+   {
+    "name": "THE DELI Prosciutto Cotto",
+    "url": "https://www.aldi.co.uk/product/the-deli-prosciutto-cotto-000000000645228002"
+   }
+  ],
+  "vegetable stock cubes": [
+   {
+    "name": "BRAMWELLS Vegetable Stock Cubes 12 Pack",
+    "url": "https://www.aldi.co.uk/product/bramwells-vegetable-stock-cubes-12-pack-000000000000592895"
+   }
+  ]
+ }
+}

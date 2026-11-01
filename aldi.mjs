@@ -26,7 +26,7 @@ if (lookups) {
   const old = JSON.parse(await readFile('data/aldi-lookups.json', 'utf8').catch(() => '{"products":[],"unpriced":{}}'));
   const fresh = new Set();
   for (const f of files) for (const r of JSON.parse(await readFile(f, 'utf8'))) if (r.term) fresh.add(r.term);
-  for (const r of old.products) if (!fresh.has(r.term)) seen.set(r.url || r.name, r);
+  for (const r of old.products) if (!fresh.has(r.term)) seen.set(r.term + '|' + (r.url || r.name), r);
   for (const [t, v] of Object.entries(old.unpriced || {})) if (!fresh.has(t)) unpriced[t] = v;
 }
 for (const f of files) {
@@ -46,7 +46,7 @@ for (const f of files) {
     // either as shown or read as per kg (the label sometimes says /100 G for a per-kg figure).
     const shown = Number(String(raw.unitText || '').match(/£\s*(\d+(?:\.\d+)?)/)?.[1]);
     if (shown && p.unitPrice && Math.abs(shown - p.unitPrice) / p.unitPrice > 0.06 && Math.abs(shown * 10 - p.unitPrice) / p.unitPrice > 0.06) { labelOff++; continue; }
-    const key = lookups ? raw.url || raw.name : raw.name + '|' + raw.size;
+    const key = lookups ? raw.term + '|' + (raw.url || raw.name) : raw.name + '|' + raw.size;
     if (!seen.has(key)) {
       seen.set(key, { ...raw, price, was: Number(raw.was) || null });
       perCat[raw.category] = (perCat[raw.category] || 0) + 1;

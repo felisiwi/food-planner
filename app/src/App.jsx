@@ -355,6 +355,7 @@ function Tag({ o }) {
   if (!o) return null;
   if (o.source === 'you') return <span className="tag">Added by you</span>;
   if (o.similar) return <span className="tag">Similar: {o.similar}</span>;
+  if (/^specially selected/i.test(o.name)) return <span className="tag">Aldi premium range</span>;
   if (o.source === 'receipt') return <span className="tag">From a receipt{o.date ? `, ${o.date}` : ''}{o.match === false ? ' · check item' : ''}</span>;
   return o.offer ? <span className="tag offer">{o.offer}</span> : null;
 }
