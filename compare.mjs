@@ -7,7 +7,10 @@
 // Polite like fetch.mjs: 6s between Morrisons requests, honest user agent,
 // results cached 7 days, stops at the first non-200 response.
 //
-// Usage: node compare.mjs [--limit N]
+// Usage: node compare.mjs [--limit N] [--delay SECONDS] [--patient]
+//   --delay    seconds between Morrisons searches (default 6; use 45 for long runs)
+//   --patient  on a block, wait 30 minutes and carry on at the same slow pace,
+//              giving up after 3 blocks (for unattended overnight runs)
 
 import { readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -16,7 +19,9 @@ import { relevant } from './lib/match.mjs';
 
 const args = process.argv.slice(2);
 const LIMIT = args.includes('--limit') ? Number(args[args.indexOf('--limit') + 1]) : Infinity;
-const DELAY_MS = 6000;
+const DELAY_MS = (args.includes('--delay') ? Number(args[args.indexOf('--delay') + 1]) : 6) * 1000;
+const PATIENT = args.includes('--patient');
+const BLOCK_WAIT_MS = 30 * 60 * 1000;
 const CACHE_MS = 7 * 24 * 60 * 60 * 1000;
 const CACHE = 'data/compare-morrisons.json';
 const UA = 'food-planner/0.3 (personal shopping-list tool; low volume)';
@@ -71,15 +76,23 @@ const cache = existsSync(CACHE) ? JSON.parse(await readFile(CACHE, 'utf8')) : {}
 const terms = [...new Set(lidl.map((p) => plainTerm(p.name)).filter((t) => t.split(' ').length >= 1 && t.length >= 3))];
 console.log(`${lidl.length} Lidl products → ${terms.length} Morrisons searches (${terms.filter((t) => cache[t] && Date.now() - cache[t].fetchedAt < CACHE_MS).length} cached).`);
 
-let fetched = 0;
-for (const term of terms.slice(0, LIMIT)) {
+let fetched = 0, blocks = 0;
+const stamp = () => new Date().toTimeString().slice(0, 5);
+search: for (const term of terms.slice(0, LIMIT)) {
   if (cache[term] && Date.now() - cache[term].fetchedAt < CACHE_MS) continue;
-  if (fetched > 0) await sleep(DELAY_MS);
-  const res = await fetch(morrisons.searchUrl(term), { headers: { 'User-Agent': UA, Accept: 'text/html' } });
-  fetched++;
-  if (res.status !== 200) {
-    console.error(`Stopped: Morrisons returned HTTP ${res.status} on "${term}". Not retrying; run again later (progress is saved).`);
-    break;
+  let res;
+  for (;;) {
+    if (fetched > 0) await sleep(DELAY_MS);
+    res = await fetch(morrisons.searchUrl(term), { headers: { 'User-Agent': UA, Accept: 'text/html' } });
+    fetched++;
+    if (res.status === 200) break;
+    blocks++;
+    if (!PATIENT || blocks >= 3) {
+      console.error(`${stamp()} Stopped: Morrisons returned HTTP ${res.status} on "${term}". Run again later (progress is saved).`);
+      break search;
+    }
+    console.error(`${stamp()} Morrisons returned HTTP ${res.status} on "${term}" (block ${blocks} of 3). Waiting 30 minutes.`);
+    await sleep(BLOCK_WAIT_MS);
   }
   try {
     cache[term] = { fetchedAt: Date.now(), products: morrisons.extract(await res.text(), 12) };
@@ -87,7 +100,7 @@ for (const term of terms.slice(0, LIMIT)) {
     console.error(`failed ${term}: ${e.message}`);
   }
   await writeFile(CACHE, JSON.stringify(cache));
-  if (fetched % 10 === 0) console.log(`  ${fetched} searched…`);
+  if (fetched % 10 === 0) console.log(`${stamp()}  ${Object.keys(cache).length} of ${terms.length} searched`);
 }
 
 // Pair each Lidl product with the cheapest real Morrisons match, comparing by
