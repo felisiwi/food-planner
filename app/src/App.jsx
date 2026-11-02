@@ -5,7 +5,8 @@ import { Switch } from '@base-ui/react/switch';
 import { Drawer } from '@base-ui/react/drawer';
 import { Dialog } from '@base-ui/react/dialog';
 import { Toast } from '@base-ui/react/toast';
-import { DATA, morrisonsFor, lidlFor, aldiFor, aldiNoPrice, gbp, perUnit, unitText, orderOptions, choosePack, sizeText, needAmount, probablyHave, shareFor, usedCost, dishesFor } from './data.js';
+import { NumberField } from '@base-ui/react/number-field';
+import { DATA, morrisonsFor, lidlFor, aldiFor, aldiNoPrice, gbp, perUnit, unitText, orderOptions, choosePack, sizeText, needAmount, probablyHave, shareFor, usedCost, dishesFor, withCount } from './data.js';
 import { useCapability, useDoc, ingredientsFor, sampleErrorText } from './claude.js';
 
 const isWeb = () => !!window.__FP_WEB__;
@@ -69,6 +70,8 @@ function Planner({ db, sample }) {
   const [picks, setPicks] = useDoc(db || null, 'picks', {});
   const [mine, setMine] = useDoc(db || null, 'myprices', {});
   const [queue, setQueue] = useDoc(db || null, 'queue', []);
+  // Packs you set with − / + in the shop list, per shop and item, tied to the product picked.
+  const [qty, setQty] = useDoc(db || null, 'qty', {});
   const [shopsOn, setShopsOn] = useDoc(db || null, 'shops', STORES.map((s) => s.id));
   const active = STORES.filter((s) => shopsOn.includes(s.id));
   const [tab, setTab] = useState('plan');
@@ -95,7 +98,13 @@ function Planner({ db, sample }) {
           aldi: aldiFor(k),
         };
         // sel = the pack(s) picked at each shop: which product, how many, what it costs, whether it's oversized.
-        const sel = Object.fromEntries(STORES.map((s) => [s.id, choosePack(opts[s.id], it, picks[s.id]?.[k], legacyUnit)]));
+        // base: the automatic pick, used to decide which shop wins. sel: with any − / + changes,
+        // used for what you pay, so adding a pack doesn't move an item to another shop's list.
+        const base = Object.fromEntries(STORES.map((s) => [s.id, choosePack(opts[s.id], it, picks[s.id]?.[k], legacyUnit)]));
+        const sel = Object.fromEntries(STORES.map((s) => {
+          const q = qty[s.id]?.[k];
+          return [s.id, q && base[s.id] && q.name === base[s.id].opt.name ? withCount(base[s.id], q.n) : base[s.id]];
+        }));
         // The three labelled alternatives shown in the options sheet and the "bigger pack" suggestion.
         const alts = Object.fromEntries(STORES.map((s) => [s.id, opts[s.id].length ? {
           best: choosePack(opts[s.id], it, { mode: 'similar' }),
@@ -108,15 +117,16 @@ function Planner({ db, sample }) {
         // Compare per kg/l when both shops give the same unit, otherwise per pack.
         // An oversized pick is judged by what you'd actually pay, so a cheap-per-kg giant bag doesn't win the split.
         // With more than two shops: per kg/l only when every shop that has it gives the same unit.
-        const priced = active.filter((s) => cost[s.id] != null);
-        const oversized = priced.some((s) => sel[s.id]?.big);
+        const baseCost = Object.fromEntries(STORES.map((s) => [s.id, base[s.id] ? base[s.id].cost : null]));
+        const priced = active.filter((s) => baseCost[s.id] != null);
+        const oversized = priced.some((s) => base[s.id]?.big);
         const units = priced.map((s) => unit[s.id]?.u);
         const sameUnit = !oversized && priced.length > 1 && units.every((u) => u && u === units[0]);
-        const value = (id) => (sameUnit ? unit[id].v : cost[id]);
+        const value = (id) => (sameUnit ? unit[id].v : baseCost[id]);
         const known = [...priced].sort((a, b) => value(a.id) - value(b.id));
         return { it, k, opts, sel, alts, chosen, cost, unit, have: probablyHave(it), basis: sameUnit ? 'per ' + units[0] : oversized ? 'for what you’d pay' : 'per pack', value, best: known[0]?.id || null };
       }),
-    [needed, mine, picks, legacyUnit, shopsOn],
+    [needed, mine, picks, legacyUnit, shopsOn, qty],
   );
 
   // Ingredients with no Morrisons price yet go on the laptop's to-do list.
@@ -201,7 +211,7 @@ function Planner({ db, sample }) {
               {vsMorrisons.map((c, i) => (
                 <span key={c.s.id}>
                   {i > 0 && ' · '}
-                  {c.s.label} <b>{Math.abs(c.pct)}% {c.diff >= 0 ? 'cheaper' : 'dearer'}</b> ({c.n} items)
+                  {c.s.label} <b className={c.diff >= 0 ? '' : 'dearer'}>{Math.abs(c.pct)}% {c.diff >= 0 ? 'cheaper' : 'dearer'}</b> ({c.n} items)
                 </span>
               ))}
             </p>
@@ -246,6 +256,7 @@ function Planner({ db, sample }) {
                 key={s.id} store={s} rows={mineRows} ticks={ticks[s.id] || {}}
                 onTick={(k, v) => setTicks({ ...ticks, [s.id]: { ...(ticks[s.id] || {}), [k]: v } })}
                 onPick={(k, v) => setPick(s.id, k, v)}
+                onQty={(k, name, n) => setQty({ ...qty, [s.id]: { ...(qty[s.id] || {}), [k]: { name, n } } })}
               />
             );
           })}
@@ -564,7 +575,19 @@ function DishCosts({ dishCosts }) {
   );
 }
 
-function ShopList({ store, rows, ticks, onTick, onPick }) {
+function Qty({ value, onChange, label }) {
+  return (
+    <NumberField.Root className="qty" value={value} min={0} max={20} step={1} onValueChange={(v) => v != null && onChange(v)}>
+      <NumberField.Group className="qty-g">
+        <NumberField.Decrement className="qty-b" aria-label={`One less ${label}`}>−</NumberField.Decrement>
+        <NumberField.Input className="qty-i" aria-label={`Packs of ${label}`} />
+        <NumberField.Increment className="qty-b" aria-label={`One more ${label}`}>+</NumberField.Increment>
+      </NumberField.Group>
+    </NumberField.Root>
+  );
+}
+
+function ShopList({ store, rows, ticks, onTick, onPick, onQty }) {
   if (!rows.length) return null;
   const groups = {};
   for (const r of rows) {
@@ -588,19 +611,21 @@ function ShopList({ store, rows, ticks, onTick, onPick }) {
             const done = !!ticks[r.k];
             const sel = r.sel[store.id];
             return (
-              <div key={r.k} className={'item' + (done ? ' done' : '')}>
-                <Thumb src={o?.image} big />
+              <div key={r.k} className={'item' + (done ? ' done' : '') + (sel?.count === 0 ? ' none' : '')}>
+                <button type="button" className="item-photo" aria-pressed={done} onClick={() => onTick(r.k, !done)}
+                  aria-label={done ? `${o ? o.name : r.it.item}: in your basket. Tap to undo` : `Got ${o ? o.name : r.it.item}`}>
+                  <Thumb src={o?.image} big />
+                  <span className="got" aria-hidden="true"><Check /></span>
+                </button>
                 <div className="item-main">
                   <div className="item-name">{o ? o.name : r.it.item}</div>
                   <PackLine sel={sel} short />
                   <div className="item-foot">
                     <span className="item-price">{r.cost[store.id] != null ? gbp(r.cost[store.id]) : 'No price'}</span>
-                    <Tag o={o} />
+                    {sel && !sel.size?.loose && <Qty value={sel.count} label={o.name} onChange={(n) => onQty(r.k, o.name, n)} />}
                   </div>
+                  <Tag o={o} />
                 </div>
-                <Checkbox.Root className="tick" checked={done} onCheckedChange={(v) => onTick(r.k, v)} aria-label={`Got ${o ? o.name : r.it.item}`}>
-                  <Checkbox.Indicator className="cb-ind"><Check /></Checkbox.Indicator>
-                </Checkbox.Root>
                 <PickPanel r={r} sid={store.id} onPick={(v) => onPick(r.k, v)} />
               </div>
             );

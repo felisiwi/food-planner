@@ -320,3 +320,13 @@ export function dishesFor(plan, items) {
   if (!names.length) return text ? [{ name: 'your meals', servings: Number(text.match(/\bfor\s+(\d+)/)?.[1]) || null }] : [];
   return names.map((name) => ({ name, servings: servingsIn(name) || (names.length === 1 ? Number(text.match(/\bfor\s+(\d+)/)?.[1]) || null : null) }));
 }
+
+
+// The same pick with a different number of packs (the − / + control in the shop list).
+export function withCount(sel, n) {
+  if (!sel || n == null || n === sel.count || sel.size?.loose) return sel;
+  const count = Math.max(0, Math.round(n));
+  const total = sel.size ? { qty: sel.size.qty * count, u: sel.size.u } : null;
+  const ratio = total && sel.need && total.u === sel.need.u && sel.need.qty > 0 ? total.qty / sel.need.qty : null;
+  return { ...sel, count, total, cost: sel.opt.price * count, ratio, big: ratio != null && ratio > 2.0001, alt: null, manual: true };
+}

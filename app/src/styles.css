@@ -42,7 +42,7 @@ button { font: inherit; color: inherit; }
 .tot-n { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .tot-c { font-size: 12px; opacity: 0.7; }
 .verdict { margin: 10px 0 0; font-size: 14px; }
-.verdict b { color: var(--head-good); }
+.verdict b { color: var(--head-good); } .verdict b.dearer { color: #ffc56b; }
 
 .tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 3; display: flex; gap: 4px; background: var(--bg);
   border-bottom: 1px solid var(--line); max-width: none; }
@@ -98,7 +98,7 @@ button { font: inherit; color: inherit; }
 .shop-h.morrisons { background: var(--morrisons-bg); color: var(--morrisons); }
 .shop-h.lidl { background: var(--lidl-bg); color: var(--lidl); }
 .h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 14px 0 6px; }
-.item { display: grid; grid-template-columns: 96px 1fr 44px; column-gap: 12px; row-gap: 8px; align-items: center; background: var(--card);
+.item { display: grid; grid-template-columns: 96px 1fr; column-gap: 12px; row-gap: 8px; align-items: center; background: var(--card);
   border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; margin-bottom: 8px; }
 .item.done { opacity: 0.5; } .item.done .item-name { text-decoration: line-through; }
 .thumb { width: 52px; height: 52px; border-radius: 10px; object-fit: contain; background: #fff; }
@@ -221,13 +221,23 @@ button { font: inherit; color: inherit; }
 .item-main { gap: 4px; align-self: center; }
 .item-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .item-foot .item-price { font-size: 18px; font-weight: 700; text-align: left; }
-.tick { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line); background: var(--card);
-  color: #fff; cursor: pointer; padding: 0; align-self: center; }
-.tick:hover { border-color: var(--muted); }
-.tick:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-.tick[data-checked] { background: var(--good); border-color: var(--good); }
-.tick svg { width: 22px; height: 22px; }
-.item.done { opacity: 0.55; }
+/* Tap the photo to mark it in your basket */
+.item-photo { position: relative; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 12px; align-self: start; }
+.item-photo:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.got { position: absolute; right: -6px; bottom: -6px; display: none; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--good); color: #fff; border: 2px solid var(--card); }
+.got svg { width: 16px; height: 16px; }
+.item.done .got { display: grid; }
+.item.none .item-price { color: var(--muted); text-decoration: line-through; }
+/* Small − n + control */
+.item-foot { justify-content: space-between; }
+.qty-g { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; background: var(--card); }
+.qty-b { width: 32px; height: 32px; border: 0; background: none; color: var(--ink); font-size: 18px; line-height: 1; cursor: pointer; border-radius: 999px; padding: 0; }
+.qty-b:hover { background: var(--line); }
+.qty-b:disabled { color: var(--line); cursor: default; background: none; }
+.qty-b:focus-visible, .qty-i:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.qty-i { width: 26px; border: 0; background: none; color: var(--ink); text-align: center; font: inherit; font-weight: 700; font-variant-numeric: tabular-nums; padding: 0; }
+.item.done { opacity: 0.6; } .item.done .item-name { text-decoration: line-through; }
 .item.done .thumb { filter: grayscale(1); }
 
 /* Cost per portion */
