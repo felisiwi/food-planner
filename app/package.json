@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node --test test/packs.test.mjs"
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",

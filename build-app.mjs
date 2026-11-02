@@ -60,6 +60,11 @@ const example = existsSync('list.txt')
     })
   : [];
 
+// Store map (zones, signs, where products sit): hand-edited in store-map/stamford-hill.json.
+// Missing or unreadable means an empty map and the app works without it. STORE_MAP=path overrides, for previews.
+const mapFile = process.env.STORE_MAP || 'store-map/stamford-hill.json';
+const storeMap = { store: '', updated: '', zones: [], products: {}, needsCheck: [], ...(await read(mapFile, {})) };
+
 const data = {
   updatedAt: results.updatedAt || Date.now(),
   morrisons,
@@ -68,6 +73,7 @@ const data = {
   aldiUpdatedAt: aldiRange.fetchedAt || null,
   aldiNoPrice: aldiLookups.unpriced || {},
   receipts: Object.values(receipts.items || {}),
+  storeMap,
   example,
   exampleDishes: [{ name: 'veggie lasagna', servings: 8 }],
 };
@@ -97,5 +103,5 @@ await writeFile('app.artifact.html', fragment);
 
 console.log(
   `Wrote app.html and app/public/data.json (${Math.round(html.length / 1024)} KB): ${Object.keys(morrisons).length} Morrisons searches, ` +
-    `${lidl.length} Lidl products, ${aldi.length} Aldi products, ${data.receipts.length} receipt prices.`,
+    `${lidl.length} Lidl products, ${aldi.length} Aldi products, ${data.receipts.length} receipt prices, store map: ${storeMap.zones.length} zones.`,
 );

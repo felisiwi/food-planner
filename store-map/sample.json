@@ -1,0 +1,18 @@
+{
+  "store": "Sample store (used by the tests, not the real map)",
+  "updated": "2026-11-02",
+  "zones": [
+    { "id": "fv", "label": "Fruit & veg", "walkOrder": 1, "signs": ["Fruit", "Vegetables", "Salads"],
+      "categories": ["Fresh Fruit & Veg", "Fruit & Veg"] },
+    { "id": "a7", "label": "Aisle 7", "walkOrder": 9, "signs": ["Tins", "Pasta", "Rice"],
+      "categories": ["Tins, Cans & Packets", "Rice, Pasta, Noodles & Pulses"] },
+    { "id": "a9", "label": "Aisle 9", "walkOrder": 11, "signs": ["Baking", "Cooking ingredients"],
+      "categories": ["Baking Ingredients", "Cooking Ingredients", "Food Cupboard > Sugar & Sweeteners"] },
+    { "id": "dairy", "label": "Chillers", "walkOrder": 20, "signs": ["Milk", "Cheese", "Butter"],
+      "categories": ["Cheese", "Milk, Eggs & Butter"] }
+  ],
+  "products": {
+    "Morrisons Whole Carrots (300g)": { "zone": "fv", "side": "right", "shelf": "bottom", "note": "loose veg bins" }
+  },
+  "needsCheck": []
+}
