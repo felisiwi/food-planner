@@ -4,10 +4,13 @@ import { Checkbox } from '@base-ui/react/checkbox';
 import { Switch } from '@base-ui/react/switch';
 import { Drawer } from '@base-ui/react/drawer';
 import { Dialog } from '@base-ui/react/dialog';
+import { ToggleGroup } from '@base-ui/react/toggle-group';
+import { Toggle } from '@base-ui/react/toggle';
 import { Toast } from '@base-ui/react/toast';
 import { NumberField } from '@base-ui/react/number-field';
 import { DATA, morrisonsFor, lidlFor, aldiFor, aldiNoPrice, gbp, perUnit, unitText, orderOptions, choosePack, sizeText, needAmount, probablyHave, shareFor, usedCost, dishesFor, withCount } from './data.js';
 import { useCapability, useDoc, ingredientsFor, sampleErrorText } from './claude.js';
+import { EMPTY_MAP, resolvePlace, placeText, zoneHeading, learnOrder, groupByZone, recordPick, makeTag, customId, CUSTOM_PREFIX } from '../../lib/storemap.mjs';
 
 const isWeb = () => !!window.__FP_WEB__;
 
@@ -69,6 +72,8 @@ function Planner({ db, sample }) {
   const [ticks, setTicks] = useDoc(db || null, 'ticks', {});
   const [picks, setPicks] = useDoc(db || null, 'picks', {});
   const [mine, setMine] = useDoc(db || null, 'myprices', {});
+  const [places, setPlaces] = useDoc(db || null, 'places', {}); // your aisle tags: { [product]: { zone, side, shelf, note, at } }
+  const [trips, setTrips] = useDoc(db || null, 'trips', []); // the order you ticked things off, last 20 shop trips
   const [queue, setQueue] = useDoc(db || null, 'queue', []);
   // Packs you set with − / + in the shop list, per shop and item, tied to the product picked.
   const [qty, setQty] = useDoc(db || null, 'qty', {});
@@ -83,6 +88,19 @@ function Planner({ db, sample }) {
   const isExample = !plan.items;
   const pantrySet = useMemo(() => new Set(pantry.map(key)), [pantry]);
   const needed = items.filter((it) => !it.skip && !pantrySet.has(key(it.item)));
+
+  // Where things are in Morrisons: the map baked into the data (empty until the aisle photos are read),
+  // your own tags on top, and the walking order learned from your trips.
+  const storeMap = DATA.storeMap || EMPTY_MAP;
+  const learned = useMemo(() => learnOrder(trips, 'morrisons'), [trips]);
+  const nameAtMorrisons = (r) => r.chosen.morrisons?.name ?? r.it.item;
+  const placeOf = (r) => resolvePlace(nameAtMorrisons(r), r.chosen.morrisons?.category, places, storeMap);
+  // Zones for the picker: the map's, plus any you typed in yourself under "Other…".
+  const pickerZones = useMemo(() => {
+    const custom = new Map();
+    for (const t of Object.values(places || {})) if (t?.zone?.startsWith(CUSTOM_PREFIX) && !custom.has(t.zone)) custom.set(t.zone, { id: t.zone, label: t.zoneLabel || t.zone, signs: [], walkOrder: null });
+    return [...(storeMap.zones || []), ...custom.values()];
+  }, [places, storeMap]);
 
   // Options per store for each needed item; your own prices come first.
   const rows = useMemo(
@@ -141,6 +159,19 @@ function Planner({ db, sample }) {
   const setPick = (sid, k, value) => {
     const ids = sid === 'both' ? active.map((s) => s.id) : [sid];
     setPicks({ ...picks, ...Object.fromEntries(ids.map((id) => [id, { ...(picks[id] || {}), [k]: value }])) });
+  };
+
+  // Ticking stores the time (older saves just have `true`), and adds the item to today's trip so the
+  // walking order can be learned. Unticking takes it off again.
+  const tick = (sid, r, v) => {
+    const t = Date.now();
+    setTicks({ ...ticks, [sid]: { ...(ticks[sid] || {}), [r.k]: v ? t : false } });
+    setTrips(recordPick(trips, { store: sid, product: sid === 'morrisons' ? nameAtMorrisons(r) : r.chosen[sid]?.name ?? r.it.item, zone: sid === 'morrisons' ? placeOf(r).zone?.id : null, t }, v));
+  };
+  const saveTag = (product, tag) => {
+    const next = { ...places };
+    if (tag) next[product] = tag; else delete next[product];
+    setPlaces(next);
   };
 
   const totals = Object.fromEntries(STORES.map((s) => [s.id, rows.reduce((a, r) => a + (r.cost[s.id] ?? 0), 0)]));
@@ -254,9 +285,10 @@ function Planner({ db, sample }) {
             return (
               <ShopList
                 key={s.id} store={s} rows={mineRows} ticks={ticks[s.id] || {}}
-                onTick={(k, v) => setTicks({ ...ticks, [s.id]: { ...(ticks[s.id] || {}), [k]: v } })}
+                onTick={(r, v) => tick(s.id, r, v)}
                 onPick={(k, v) => setPick(s.id, k, v)}
                 onQty={(k, name, n) => setQty({ ...qty, [s.id]: { ...(qty[s.id] || {}), [k]: { name, n } } })}
+                where={s.id === 'morrisons' ? { placeOf, nameOf: nameAtMorrisons, map: storeMap, learned, zones: pickerZones, onTag: saveTag } : null}
               />
             );
           })}
@@ -587,49 +619,151 @@ function Qty({ value, onChange, label }) {
   );
 }
 
-function ShopList({ store, rows, ticks, onTick, onPick, onQty }) {
+const SIDES = ['left', 'right'];
+const SHELVES = ['top', 'middle', 'bottom'];
+
+// "Aisle 7 · left · middle" under each Morrisons item, or "Add aisle". Tap to tag it yourself:
+// a bottom sheet (Base UI Drawer, like the pack options) with the aisle, side, shelf and a note.
+function AisleChip({ name, place, zones, onTag }) {
+  const [open, setOpen] = useState(false);
+  const [d, setD] = useState({ zone: '', zoneLabel: '', side: '', shelf: '', note: '' });
+  const known = place.zone ? placeText(place) : '';
+  const start = (o) => {
+    setOpen(o);
+    // Start from what we already think, so you only fix the part that's wrong.
+    if (o) setD({ zone: zones.some((z) => z.id === place.zone?.id) ? place.zone.id : '', zoneLabel: '', side: place.side, shelf: place.shelf, note: place.note });
+  };
+  const customs = zones.filter((z) => z.id.startsWith(CUSTOM_PREFIX));
+  const label = d.zone === '__other' ? d.zoneLabel.trim() : '';
+  const ready = d.zone && (d.zone !== '__other' || label);
+  const save = () => {
+    const custom = d.zone === '__other';
+    const z = custom ? { id: customId(label), label } : zones.find((x) => x.id === d.zone);
+    onTag(name, makeTag({ zone: z.id, zoneLabel: z.id.startsWith(CUSTOM_PREFIX) ? z.label : '', side: d.side, shelf: d.shelf, note: d.note }));
+    setOpen(false);
+  };
+  return (
+    <Drawer.Root open={open} onOpenChange={start}>
+      <Drawer.Trigger className={'aisle' + (known ? '' : ' empty') + (place.source === 'you' ? ' mine' : '')} aria-label={known ? `Where it is: ${known}. Change` : `Add aisle for ${name}`}>
+        <span className="aisle-t">{known || 'Add aisle'}</span>
+      </Drawer.Trigger>
+      <Drawer.Portal>
+        <Drawer.Backdrop className="backdrop" />
+        <Drawer.Viewport className="sheet-vp">
+          <Drawer.Popup className="sheet">
+            <div className="sheet-handle" aria-hidden="true" />
+            <Drawer.Title className="sheet-t">Where is {name}?</Drawer.Title>
+            <Drawer.Description className="sheet-d">
+              {place.source === 'you' ? 'Your own tag.' : place.source === 'map' ? 'From the store map. Change it if it’s wrong.' : place.source === 'category' ? 'A guess from its category. Change it if it’s wrong.' : 'Not known yet. This will be remembered.'}
+            </Drawer.Description>
+            <label className="field-l" htmlFor="aisle-zone">Aisle or area</label>
+            <select id="aisle-zone" className="input select" value={d.zone} onChange={(e) => setD((p) => ({ ...p, zone: e.target.value }))}>
+              <option value="">Choose…</option>
+              {zones.filter((z) => !z.id.startsWith(CUSTOM_PREFIX)).map((z) => <option key={z.id} value={z.id}>{zoneHeading(z)}</option>)}
+              {customs.map((z) => <option key={z.id} value={z.id}>{z.label} (yours)</option>)}
+              <option value="__other">Other…</option>
+            </select>
+            {d.zone === '__other' && (
+              <>
+                <label className="sr" htmlFor="aisle-other">Name of the aisle or area</label>
+                <input id="aisle-other" className="input" placeholder="e.g. Back wall, End of aisle 4" value={d.zoneLabel} onChange={(e) => setD((p) => ({ ...p, zoneLabel: e.target.value }))} />
+              </>
+            )}
+            <div className="field-l" id="aisle-side-l">Side</div>
+            <ToggleGroup className="seg" aria-labelledby="aisle-side-l" value={d.side ? [d.side] : []} onValueChange={(v) => setD((p) => ({ ...p, side: v[0] || '' }))}>
+              {SIDES.map((x) => <Toggle key={x} value={x} className="seg-b">{x}</Toggle>)}
+            </ToggleGroup>
+            <div className="field-l" id="aisle-shelf-l">Shelf</div>
+            <ToggleGroup className="seg" aria-labelledby="aisle-shelf-l" value={d.shelf ? [d.shelf] : []} onValueChange={(v) => setD((p) => ({ ...p, shelf: v[0] || '' }))}>
+              {SHELVES.map((x) => <Toggle key={x} value={x} className="seg-b">{x}</Toggle>)}
+            </ToggleGroup>
+            <label className="field-l" htmlFor="aisle-note">Note (optional)</label>
+            <input id="aisle-note" className="input" placeholder="e.g. by the bread, bottom bin" value={d.note} onChange={(e) => setD((p) => ({ ...p, note: e.target.value }))} />
+            <div className="row-actions sheet-actions">
+              <button className="btn primary big" onClick={save} disabled={!ready}>Save</button>
+              {place.source === 'you' && <button className="btn big" onClick={() => { onTag(name, null); setOpen(false); }}>Remove my tag</button>}
+              <Drawer.Close className="btn big">Cancel</Drawer.Close>
+            </div>
+          </Drawer.Popup>
+        </Drawer.Viewport>
+      </Drawer.Portal>
+    </Drawer.Root>
+  );
+}
+
+// One shopping item: photo, name, pack, price, aisle chip, tick, and the pack options.
+function ShopItem({ store, r, done, onTick, onPick, onQty, chip }) {
+  const o = r.chosen[store.id];
+  const sel = r.sel[store.id];
+  return (
+    <div className={'item' + (done ? ' done' : '') + (sel?.count === 0 ? ' none' : '')}>
+      <button type="button" className="item-photo" aria-pressed={done} onClick={() => onTick(r, !done)}
+        aria-label={done ? `${o ? o.name : r.it.item}: in your basket. Tap to undo` : `Got ${o ? o.name : r.it.item}`}>
+        <Thumb src={o?.image} big />
+        <span className="got" aria-hidden="true"><Check /></span>
+      </button>
+      <div className="item-main">
+        <div className="item-name">{o ? o.name : r.it.item}</div>
+        <PackLine sel={sel} short />
+        <div className="item-foot">
+          <span className="item-price">{r.cost[store.id] != null ? gbp(r.cost[store.id]) : 'No price'}</span>
+          {sel && !sel.size?.loose && <Qty value={sel.count} label={o.name} onChange={(n) => onQty(r.k, o.name, n)} />}
+        </div>
+        <Tag o={o} />
+        {chip}
+      </div>
+      <PickPanel r={r} sid={store.id} onPick={(v) => onPick(r.k, v)} />
+    </div>
+  );
+}
+
+// `where` is only passed for Morrisons: its store map, your tags and the learned walking order.
+function ShopList({ store, rows, ticks, onTick, onPick, onQty, where }) {
+  const hasMap = !!where && where.map.zones.length > 0;
+  // Until you pick one, a map means "in the order you walk", no map means the old category grouping.
+  const [chosen, setChosen] = useState(null);
+  const mode = where ? chosen ?? (hasMap ? 'store' : 'category') : 'category';
   if (!rows.length) return null;
-  const groups = {};
-  for (const r of rows) {
-    const o = r.chosen[store.id];
-    const g = o ? (o.category || []).slice(0, 2).join(' › ') || 'Other' : 'Not priced here';
-    (groups[g] ||= []).push(r);
-  }
   const total = rows.reduce((a, r) => a + (r.cost[store.id] ?? 0), 0);
   const left = rows.filter((r) => !ticks[r.k]).length;
+
+  let groups;
+  if (mode === 'store') {
+    groups = groupByZone(rows, where.placeOf, where.nameOf, where.map, where.learned).map((g) => ({ key: g.zone?.id || 'none', title: zoneHeading(g.zone), rows: g.rows }));
+  } else {
+    const byCat = {};
+    for (const r of rows) {
+      const o = r.chosen[store.id];
+      const g = o ? (o.category || []).slice(0, 2).join(' › ') || 'Other' : 'Not priced here';
+      (byCat[g] ||= []).push(r);
+    }
+    groups = Object.keys(byCat).sort((a, b) => (a === 'Not priced here') - (b === 'Not priced here') || a.localeCompare(b)).map((g) => ({ key: g, title: g, rows: byCat[g] }));
+  }
+
   return (
     <section className="shop">
       <h2 className={'shop-h ' + store.id}>
         <span>{store.label} {store.place}</span>
         <span>{left} left · {gbp(total)}</span>
       </h2>
-      {Object.keys(groups).sort((a, b) => (a === 'Not priced here') - (b === 'Not priced here') || a.localeCompare(b)).map((g) => (
-        <div key={g}>
-          <h3 className="h3">{g}</h3>
-          {groups[g].map((r) => {
-            const o = r.chosen[store.id];
-            const done = !!ticks[r.k];
-            const sel = r.sel[store.id];
-            return (
-              <div key={r.k} className={'item' + (done ? ' done' : '') + (sel?.count === 0 ? ' none' : '')}>
-                <button type="button" className="item-photo" aria-pressed={done} onClick={() => onTick(r.k, !done)}
-                  aria-label={done ? `${o ? o.name : r.it.item}: in your basket. Tap to undo` : `Got ${o ? o.name : r.it.item}`}>
-                  <Thumb src={o?.image} big />
-                  <span className="got" aria-hidden="true"><Check /></span>
-                </button>
-                <div className="item-main">
-                  <div className="item-name">{o ? o.name : r.it.item}</div>
-                  <PackLine sel={sel} short />
-                  <div className="item-foot">
-                    <span className="item-price">{r.cost[store.id] != null ? gbp(r.cost[store.id]) : 'No price'}</span>
-                    {sel && !sel.size?.loose && <Qty value={sel.count} label={o.name} onChange={(n) => onQty(r.k, o.name, n)} />}
-                  </div>
-                  <Tag o={o} />
-                </div>
-                <PickPanel r={r} sid={store.id} onPick={(v) => onPick(r.k, v)} />
-              </div>
-            );
-          })}
+      {where && (
+        <>
+          <ToggleGroup className="seg" aria-label="Order of the list" value={[mode]} onValueChange={(v) => v[0] && setChosen(v[0])}>
+            <Toggle value="store" className="seg-b">Store order</Toggle>
+            <Toggle value="category" className="seg-b">By category</Toggle>
+          </ToggleGroup>
+          {mode === 'store' && !hasMap && <p className="note">No store map yet. Tap “Add aisle” on an item to say where it is. Your order of ticking is remembered, and the list follows it after a few trips.</p>}
+        </>
+      )}
+      {groups.map((g) => (
+        <div key={g.key}>
+          <h3 className="h3">{g.title}</h3>
+          {g.rows.map((r) => (
+            <ShopItem
+              key={r.k} store={store} r={r} done={!!ticks[r.k]} onTick={onTick} onPick={onPick} onQty={onQty}
+              chip={where && <AisleChip name={where.nameOf(r)} place={where.placeOf(r)} zones={where.zones} onTag={where.onTag} />}
+            />
+          ))}
         </div>
       ))}
     </section>

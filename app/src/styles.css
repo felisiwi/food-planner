@@ -253,3 +253,21 @@ button { font: inherit; color: inherit; }
 .portion-line { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
 .portion-line b { color: var(--ink); }
 .cap { text-transform: capitalize; }
+
+/* Aisle chip, segmented switches and the aisle sheet */
+.aisle { justify-self: start; position: relative; margin-top: 6px; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  border-radius: 999px; padding: 4px 11px; font-size: 13px; cursor: pointer; font-family: inherit; }
+.aisle::after { content: ""; position: absolute; inset: -8px -4px; } /* a 44px-high tap target around a small chip */
+.aisle.empty { color: var(--muted); border-style: dashed; }
+.aisle.mine { border-color: var(--good); }
+.seg { display: flex; gap: 4px; padding: 3px; margin: 10px 0 4px; background: var(--line); border-radius: 12px; }
+.seg-b { flex: 1; min-height: 44px; border: 0; background: none; color: var(--muted); border-radius: 10px; font: inherit; font-size: 15px; cursor: pointer; }
+.sheet .seg-b { text-transform: capitalize; }
+.seg-b[data-pressed] { background: var(--card); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
+.field-l { display: block; font-size: 13px; color: var(--muted); margin: 14px 0 6px; }
+.select { min-height: 44px; }
+.sheet .input { min-height: 44px; margin-top: 8px; }
+.sheet .field-l + .input { margin-top: 0; }
+.sheet .seg { margin: 0; }
+.sheet-actions { margin-top: 16px; flex-wrap: wrap; }
+.btn.big { min-height: 44px; }
