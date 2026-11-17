@@ -2,6 +2,7 @@
 import { rank, relevant } from '../../lib/match.mjs';
 import { match as lidlMatch } from '../../lib/lidl.mjs';
 import { match as aldiMatch } from '../../lib/aldi.mjs';
+import { stockStatus } from '../../lib/storemap.mjs';
 
 export const DATA = window.__FP_DATA__ || { morrisons: {}, lidl: [], aldi: [], receipts: [], updatedAt: Date.now(), example: [] };
 
@@ -236,9 +237,17 @@ export function choosePack(allOpts, it, pick, legacyUnit = false) {
   const need = needAmount(it);
   const fallbackCount = ['tin', 'pack'].includes(it.unit) && it.amount > 1 ? Math.round(it.amount) : 1;
   const real = opts.filter((o) => o.match !== false);
-  const pool = real.length ? real : opts;
+  const pool0 = real.length ? real : opts;
+  // Everything not known to be missing from the shop (the store map is the Morrisons Stamford Hill one),
+  // unless nothing else is left. A pick you made by hand, or a price you typed, still wins over all of this.
+  const stocked = pool0.filter((o) => stockStatus(o.name, DATA.storeMap) !== 'not-stocked');
+  const open = stocked.length ? stocked : pool0;
   const mine = opts.find((o) => o.source === 'you');
   const p = normalisePick(pick, opts, legacyUnit);
+  // The default pick prefers products checked in the shop (placed in the store map). "Cheapest per kg" and
+  // "cheapest pack" are choices you made, so they look at everything.
+  const here = open.filter((o) => stockStatus(o.name, DATA.storeMap) === 'here');
+  const pool = p.mode === 'similar' && here.length ? here : open;
 
   // How many of a pack to buy to cover the need (a little slack, at most 6).
   const cover = (o) => {
@@ -268,11 +277,20 @@ export function choosePack(allOpts, it, pick, legacyUnit = false) {
   const out = describe(pickd.opt, pickd.count);
   let alt = null;
   if (out.big) {
-    const sp = similarPick(pool, need, fallbackCount);
+    const sp = similarPick(open, need, fallbackCount);
     const a = describe(sp.opt, sp.count);
     if (a.ratio != null && a.ratio < out.ratio - 0.01) alt = a;
   }
-  return { ...out, mode, alt, need, order: orderOptions(opts, 'pack') };
+  // Preferring products checked in the shop can cost more than an unchecked one: say so, don't hide it.
+  let cheaper = null;
+  if (pool !== open) {
+    const sp = similarPick(open, need, fallbackCount);
+    if (sp.opt.name !== pickd.opt.name) {
+      const c = describe(sp.opt, sp.count);
+      if (c.cost < out.cost - 0.005) cheaper = c;
+    }
+  }
+  return { ...out, mode, alt, cheaper, need, order: orderOptions(opts, 'pack') };
 }
 
 

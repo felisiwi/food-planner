@@ -507,6 +507,20 @@ function Suggestion({ sel, alts, onPick }) {
   );
 }
 
+// The pick is one checked in the shop (it's in the store map); a cheaper product exists that hasn't been checked there.
+function CheaperUnchecked({ sel, onPick }) {
+  const c = sel?.cheaper;
+  if (!c) return null;
+  return (
+    <div className="deal">
+      <span>
+        <b>Cheaper, not checked in store:</b> {c.opt.name} · {packSizeText(c)} {gbp(c.cost)} · {money(sel.cost - c.cost)} less
+      </span>
+      <button className="deal-b" onClick={() => onPick({ mode: 'manual', name: c.opt.name })}>Switch</button>
+    </div>
+  );
+}
+
 // Every option at one shop, labelled, in a sheet that slides up (Base UI Drawer). Tap one to choose it.
 function OptionsSheet({ sel, alts, it, what, onPick }) {
   const [open, setOpen] = useState(false);
@@ -579,6 +593,7 @@ function PickPanel({ r, sid, onPick }) {
     <div className="item-pick">
       <BigPack sel={sel} onPick={onPick} />
       {!sel.big && <Suggestion sel={sel} alts={r.alts[sid]} onPick={onPick} />}
+      <CheaperUnchecked sel={sel} onPick={onPick} />
       <OptionsSheet sel={sel} alts={r.alts[sid]} it={r.it} what={what} onPick={onPick} />
     </div>
   );

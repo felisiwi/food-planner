@@ -12,9 +12,12 @@ const skeleton = JSON.parse(readFileSync(new URL('../../store-map/stamford-hill.
 const TINS = ['Food Cupboard', 'Tins, Cans & Packets'];
 const CARROTS = 'Morrisons Whole Carrots (300g)';
 
-test('the shipped skeleton is a valid empty map', () => {
-  assert.deepEqual(skeleton.zones, []);
-  assert.deepEqual(skeleton.products, {});
+// Was "valid EMPTY map". The real map is now filled in by aisles.mjs (and by hand), so it only has to be
+// well-formed; the stronger check (every product points at a zone that exists) is in aisles.test.mjs.
+test('the shipped map is well-formed', () => {
+  assert.ok(Array.isArray(skeleton.zones));
+  assert.equal(typeof skeleton.products, 'object');
+  assert.ok(Array.isArray(skeleton.needsCheck));
 });
 
 test('category matching: full path beats second level beats top level', () => {

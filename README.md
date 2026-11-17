@@ -99,6 +99,45 @@ open compare.html
 Takes everyday food Lidl lists online plus your receipt items, finds the cheapest matching
 Morrisons product for each, and compares per kg or litre where both shops give it.
 
+## Aisles at your store (from the Morrisons More app)
+
+Morrisons' website doesn't say where anything is in a shop; the **Morrisons More** Android app does
+(Price & Product Finder, per store). `aisles.mjs` reads that off your phone over USB and saves it into
+`store-map/stamford-hill.json`, the map the Shop list already uses.
+
+```sh
+node aisles.mjs list.txt              # known products come from the map; the phone is only used for the rest
+node aisles.mjs list.txt --no-phone   # never touch the phone, just show what it knows
+node aisles.mjs list.txt --refresh    # look everything up again (hand-set places are never overwritten)
+```
+
+`list.txt` here is not the shopping list above: one product per line, **the app's name first**, then
+optional website names that mean the same product (the app and website often spell names differently):
+
+```
+Morrisons Chickpeas In Water 400g | Morrisons Chickpeas In Water (400g)
+```
+
+For the phone steps: plug in the phone, unlock it, allow USB debugging, open the app on **Price &
+Product Finder** and pick your store. The command checks before every step that the app is in front and
+the phone is unlocked, reads the screen as text only (no screenshots), never taps "Add to shopping
+list", and saves after every product, so an interruption loses nothing. Answers are reused for 28 days
+(`--max-age`). Needs `adb` (`brew install --cask android-platform-tools`).
+
+- **Not found** at your store: it prints every search result so you can pick a substitute; it never
+  swaps one in silently. It remembers the miss (`notFound` in the map file, 28 days) so a rerun doesn't
+  type the same search into the phone again; `--retry-not-found` searches those again. Each product is
+  searched once per run; `--thorough` adds a second, shorter search without the size.
+- Produce (loose veg, fruit) doesn't need the phone: it's all in the fresh produce section.
+- **Walk order:** numbered aisles are provisionally ordered by number (marked `walkOrderSource` in the
+  file); the Shop list replaces that with the order you really walk once you've ticked 3 trips. Fresh
+  produce is set first (before Aisle 1, per Felix). Aisle-end units have no order yet. TODO(felix): confirm
+  where they sit.
+- **Inside an aisle:** the app says "near the start / halfway / near the end". That's saved as `pos`
+  (0 / 0.5 / 1) and the Shop list sorts each aisle start to end and shows it in the chip
+  ("Aisle 2 · right · near the start"). TODO(felix): confirm at the shelves that the app's wording is right.
+- Notes on what the app exposes and what was blocked: `docs/blocked-requests.md`.
+
 ## Being polite
 
 Both sites limit automated traffic. `fetch.mjs` stays well inside that: one request every

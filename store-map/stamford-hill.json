@@ -1,7 +1,368 @@
 {
   "store": "Morrisons Stamford Hill",
-  "updated": "",
-  "zones": [],
-  "products": {},
-  "needsCheck": []
+  "updated": "2026-11-17",
+  "zones": [
+    {
+      "id": "end-of-aisle-facing-checkouts",
+      "label": "End of Aisle (Facing Checkouts)",
+      "walkOrder": null,
+      "signs": [],
+      "categories": []
+    },
+    {
+      "id": "a2",
+      "label": "Aisle 2",
+      "walkOrder": 2,
+      "walkOrderSource": "assumed: numbered aisles in number order",
+      "signs": [],
+      "categories": []
+    },
+    {
+      "id": "a16",
+      "label": "Aisle 16",
+      "walkOrder": 16,
+      "walkOrderSource": "assumed: numbered aisles in number order",
+      "signs": [],
+      "categories": []
+    },
+    {
+      "id": "fresh-produce-section",
+      "label": "Fresh Produce Section",
+      "walkOrder": 0,
+      "signs": [],
+      "categories": [],
+      "walkOrderSource": "told by Felix 2026-11-12: first thing you see on entering, before Aisle 1"
+    },
+    {
+      "id": "a1",
+      "label": "Aisle 1",
+      "walkOrder": 1,
+      "walkOrderSource": "assumed: numbered aisles in number order",
+      "signs": [],
+      "categories": []
+    },
+    {
+      "id": "a3",
+      "label": "Aisle 3",
+      "walkOrder": 3,
+      "walkOrderSource": "assumed: numbered aisles in number order",
+      "signs": [],
+      "categories": []
+    },
+    {
+      "id": "a15",
+      "label": "Aisle 15",
+      "walkOrder": 15,
+      "walkOrderSource": "assumed: numbered aisles in number order",
+      "signs": [],
+      "categories": []
+    }
+  ],
+  "products": {
+    "Morrisons Red Split Lentils 500g": {
+      "zone": "end-of-aisle-facing-checkouts",
+      "side": "",
+      "shelf": "",
+      "note": "They can be found on one of the aisle ends, facing the checkouts.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app"
+    },
+    "Morrisons Wholefoods Red Split Lentils 500g": {
+      "zone": "end-of-aisle-facing-checkouts",
+      "side": "",
+      "shelf": "",
+      "note": "They can be found on one of the aisle ends, facing the checkouts.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app"
+    },
+    "Morrisons Chickpeas In Water 400g": {
+      "zone": "a2",
+      "side": "right",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found near the start of aisle 2, on the right-hand side.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app",
+      "pos": 0
+    },
+    "Morrisons Chickpeas In Water (400g)": {
+      "zone": "a2",
+      "side": "right",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found near the start of aisle 2, on the right-hand side.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app",
+      "pos": 0
+    },
+    "Morrisons Chopped Tomatoes 400g": {
+      "zone": "a2",
+      "side": "right",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found near the start of aisle 2, on the right-hand side.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app",
+      "pos": 0
+    },
+    "Morrisons Chopped Tomatoes (400g)": {
+      "zone": "a2",
+      "side": "right",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found near the start of aisle 2, on the right-hand side.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app",
+      "pos": 0
+    },
+    "Morrisons Canned Reduced Fat Coconut Milk 400ml": {
+      "zone": "a2",
+      "side": "left",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found near the end of aisle 2, on the left-hand side.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app",
+      "pos": 1
+    },
+    "Morrisons Canned Reduced Fat Light Coconut Milk": {
+      "zone": "a2",
+      "side": "left",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found near the end of aisle 2, on the left-hand side.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app",
+      "pos": 1
+    },
+    "Morrisons Whole Leaf Spinach 950g": {
+      "zone": "a16",
+      "side": "right",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found near the start of aisle 16, on the right-hand side.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app",
+      "pos": 0
+    },
+    "Onions": {
+      "zone": "fresh-produce-section",
+      "side": "",
+      "shelf": "",
+      "note": "They can be found by the Potatoes, in the fresh produce section.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app"
+    },
+    "Carrots 500g": {
+      "zone": "fresh-produce-section",
+      "side": "",
+      "shelf": "",
+      "note": "They can be found by the Mushrooms, Fresh Prep Fruit, and Spring Onions, in the fresh produce section.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app"
+    },
+    "Morrisons British Carrots 500g": {
+      "zone": "fresh-produce-section",
+      "side": "",
+      "shelf": "",
+      "note": "They can be found by the Mushrooms, Fresh Prep Fruit, and Spring Onions, in the fresh produce section.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app"
+    },
+    "Indus Minced Paste Ginger & Garlic 210g": {
+      "zone": "a1",
+      "side": "right",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found near the end of aisle 1, on the right-hand side.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app",
+      "pos": 1
+    },
+    "Indus Minced Paste Ginger & Garlic": {
+      "zone": "a1",
+      "side": "right",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found near the end of aisle 1, on the right-hand side.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app",
+      "pos": 1
+    },
+    "Indus Mild Madras Curry Powder 100g": {
+      "zone": "a1",
+      "side": "right",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found halfway down aisle 1, on the right-hand side.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app",
+      "pos": 0.5
+    },
+    "Morrisons Vegetable Stock Cubes 120g": {
+      "zone": "a3",
+      "side": "left",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found near the start of aisle 3, on the left-hand side.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app",
+      "pos": 0
+    },
+    "Morrisons Brown Long Grain Rice 1kg": {
+      "zone": "a2",
+      "side": "left",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found halfway down aisle 2, on the left-hand side.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app",
+      "pos": 0.5
+    },
+    "Morrisons Easy Cook Brown Long Grain Rice": {
+      "zone": "a2",
+      "side": "left",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found halfway down aisle 2, on the left-hand side.",
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app",
+      "pos": 0.5
+    },
+    "Morrisons Yellow Split Peas 500g": {
+      "zone": "end-of-aisle-facing-checkouts",
+      "side": "",
+      "shelf": "",
+      "note": "They can be found on one of the aisle ends, facing the checkouts.",
+      "checked": "2026-11-17",
+      "source": "morrisons-more-app"
+    },
+    "Morrisons Wholefoods Yellow Split Peas": {
+      "zone": "end-of-aisle-facing-checkouts",
+      "side": "",
+      "shelf": "",
+      "note": "They can be found on one of the aisle ends, facing the checkouts.",
+      "checked": "2026-11-17",
+      "source": "morrisons-more-app"
+    },
+    "The Tofoo Co. Smoked Tofu 225g": {
+      "zone": "a15",
+      "side": "left",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found halfway down aisle 15, on the left-hand side.",
+      "pos": 0.5,
+      "checked": "2026-11-17",
+      "source": "morrisons-more-app"
+    },
+    "Morrisons Light Soy Sauce 150ml": {
+      "zone": "a2",
+      "side": "left",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found near the end of aisle 2, on the left-hand side.",
+      "pos": 1,
+      "checked": "2026-11-17",
+      "source": "morrisons-more-app"
+    },
+    "Morrisons Pearl Barley 500g": {
+      "zone": "end-of-aisle-facing-checkouts",
+      "side": "",
+      "shelf": "",
+      "note": "They can be found on one of the aisle ends, facing the checkouts.",
+      "checked": "2026-11-17",
+      "source": "morrisons-more-app"
+    },
+    "Morrisons Wholefoods Pearl Barley": {
+      "zone": "end-of-aisle-facing-checkouts",
+      "side": "",
+      "shelf": "",
+      "note": "They can be found on one of the aisle ends, facing the checkouts.",
+      "checked": "2026-11-17",
+      "source": "morrisons-more-app"
+    },
+    "Schwartz Marjoram Jar 8g": {
+      "zone": "a3",
+      "side": "left",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found near the start of aisle 3, on the left-hand side.",
+      "pos": 0,
+      "checked": "2026-11-17",
+      "source": "morrisons-more-app"
+    },
+    "Schwartz Marjoram": {
+      "zone": "a3",
+      "side": "left",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found near the start of aisle 3, on the left-hand side.",
+      "pos": 0,
+      "checked": "2026-11-17",
+      "source": "morrisons-more-app"
+    },
+    "Morrisons Smoked Paprika 40g": {
+      "zone": "a3",
+      "side": "left",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found near the start of aisle 3, on the left-hand side.",
+      "pos": 0,
+      "checked": "2026-11-17",
+      "source": "morrisons-more-app"
+    },
+    "Morrisons Smoked Paprika": {
+      "zone": "a3",
+      "side": "left",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found near the start of aisle 3, on the left-hand side.",
+      "pos": 0,
+      "checked": "2026-11-17",
+      "source": "morrisons-more-app"
+    },
+    "Morrisons Plant Revolution Super Firm Organic Tofu 200g": {
+      "zone": "a15",
+      "side": "left",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found halfway down aisle 15, on the left-hand side.",
+      "pos": 0.5,
+      "checked": "2026-11-17",
+      "source": "morrisons-more-app"
+    },
+    "Morrisons Smoky Kansas Style BBQ Sauce 300g": {
+      "zone": "a3",
+      "side": "right",
+      "shelf": "",
+      "note": "With your back to the checkouts they can be found halfway down aisle 3, on the right-hand side.",
+      "pos": 0.5,
+      "checked": "2026-11-17",
+      "source": "morrisons-more-app"
+    }
+  },
+  "needsCheck": [],
+  "notStocked": {
+    "Great Scot Red Split Lentils": {
+      "checked": "2026-11-12",
+      "source": "morrisons-more-app",
+      "note": "Searched by its exact name in Price & Product Finder at Stamford Hill: not listed. The app offered Morrisons, Indus and Laila red split lentils instead."
+    }
+  },
+  "notFound": {
+    "Morrisons Wholefoods Pearl Barley": {
+      "checked": "2026-11-17",
+      "rows": [
+        "Morrisons Pearl Barley 500g £1.20 £2.40 per kg",
+        "Morrisons Wholefoods Walnut Halves 250g £3.75 £15 per kg",
+        "Morrisons No Added Sugar Apple & Pear Fruit Barley 1 Litre £1.50 £1.50 per litre",
+        "Morrisons Wholefoods Ready To Eat Apricots 500g £4.50 £9 per kg",
+        "Morrisons Malted Barley & Rye Boule 400g £2.35 £5.88 per kg",
+        "Morrisons Wholemeal Medium 800g Unbeatable 75p 93.8p per kg"
+      ],
+      "source": "morrisons-more-app"
+    },
+    "Schwartz Marjoram": {
+      "checked": "2026-11-17",
+      "rows": [
+        "Schwartz Marjoram Jar 8g £2 £250 per kg 2 for £3.75",
+        "Schwartz Rosemary Jar 18g £2 £111.11 per kg 2 for £3.75",
+        "Schwartz Garam Masala 30g £2 £66.67 per kg 2 for £3.75",
+        "Schwartz Tarragon Jar 5g £2 £400 per kg 2 for £3.75",
+        "Schwartz Oregano 7g £2 £285.72 per kg 2 for £3.75"
+      ],
+      "source": "morrisons-more-app"
+    },
+    "Morrisons Smoked Paprika": {
+      "checked": "2026-11-17",
+      "rows": [
+        "Morrisons Smoked Paprika 40g £1.09 £27.25 per kg 2 for £2",
+        "Morrisons Smoked Paprika 95g £2.15 £22.63 per kg",
+        "Morrisons Ground Paprika 45g £1.09 £24.22 per kg 2 for £2",
+        "Morrisons Hot Paprika 40g £1.09 £27.25 per kg 2 for £2",
+        "Morrisons Austrian Smoked Cheese 125g Unbeatable £2 £16 per kg"
+      ],
+      "source": "morrisons-more-app"
+    }
+  }
 }
